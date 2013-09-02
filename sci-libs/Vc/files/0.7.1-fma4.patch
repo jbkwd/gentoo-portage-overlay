@@ -1,0 +1,45 @@
+diff --git a/avx/vector.h b/avx/vector.h
+index 2240440..5c99243 100644
+--- a/avx/vector.h
++++ b/avx/vector.h
+@@ -298,6 +298,10 @@ template<typename T> class Vector
+             VectorHelper<T>::fma(data(), factor.data(), summand.data());
+         }
+         
++        Vc_ALWAYS_INLINE void fma4(const Vector<T> &v1, const Vector<T> &v2, const Vector<T> &v3) {
++            VectorHelper<T>::fma4(data(), v1.data(), v2.data(), v3.data());
++        }        
++        
+         //naming scheme adapted from https://en.wikipedia.org/wiki/FMA4_instruction_set
+         Vc_ALWAYS_INLINE void fusedMultiplyAdd123(const Vector<T> &v1, const Vector<T> &v2) {
+             VectorHelper<T>::fma4(data(), data(), v1.data(), v2.data());
+diff --git a/scalar/vector.h b/scalar/vector.h
+index b57819a..3157a7f 100644
+--- a/scalar/vector.h
++++ b/scalar/vector.h
+@@ -235,6 +235,10 @@ class Vector
+             m_data = m_data * factor.data() + summand.data();
+         }
+         
++        Vc_ALWAYS_INLINE void fma4(const Vector<T> &v1, const Vector<T> &v2, const Vector<T> &v3) {
++            m_data = v1.data() * v2.data() + v3.data();
++        }       
++        
+         //naming scheme adapted from https://en.wikipedia.org/wiki/FMA4_instruction_set
+         Vc_ALWAYS_INLINE void fusedMultiplyAdd123(const Vector<T> &v1, const Vector<T> &v2) {
+             m_data = m_data * v1.data() + v2.data();
+diff --git a/sse/vector.h b/sse/vector.h
+index 6eb16df..d8840c0 100644
+--- a/sse/vector.h
++++ b/sse/vector.h
+@@ -364,6 +364,10 @@ template<typename T> class Vector
+             VectorHelper<T>::fma4(data(), data(), v1.data(), v2.data());
+         }
+         
++        Vc_ALWAYS_INLINE void fma4(const Vector<T> &v1, const Vector<T> &v2, const Vector<T> &v3) {
++            VectorHelper<T>::fma4(data(), v1.data(), v2.data(), v3.data());
++        }
++        
+         Vc_ALWAYS_INLINE void fusedMultiplyAdd213(const Vector<T> &v1, const Vector<T> &v2) {
+             VectorHelper<T>::fma4(data(), v1.data(), data(), v2.data());
+         }
