@@ -1,0 +1,28 @@
+--- cmake/OptimizeForArchitecture.cmake	2013-03-26 10:45:14.000000000 +0100
++++ cmake/OptimizeForArchitecture.cmake	2013-08-23 15:11:56.763948322 +0200
+@@ -116,7 +116,11 @@
+       endif(_cpu_family EQUAL 6)
+    elseif(_vendor_id STREQUAL "AuthenticAMD")
+       if(_cpu_family EQUAL 21) # 15h
+-         set(TARGET_ARCHITECTURE "bulldozer")
++        if(_cpu_model EQUAL 1)
++            set(TARGET_ARCHITECTURE "bulldozer")
++        elseif(_cpu_model EQUAL 2)
++            set(TARGET_ARCHITECTURE "piledriver")
++        endif()
+       elseif(_cpu_family EQUAL 20) # 14h
+       elseif(_cpu_family EQUAL 18) # 12h
+       elseif(_cpu_family EQUAL 16) # 10h
+@@ -209,6 +213,12 @@
+       list(APPEND _march_flag_list "bulldozer")
+       list(APPEND _march_flag_list "barcelona")
+       list(APPEND _march_flag_list "core2")
++      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma4")
++   elseif(TARGET_ARCHITECTURE STREQUAL "piledriver")
++      list(APPEND _march_flag_list "bdver2")
++      list(APPEND _march_flag_list "bulldozer")
++      list(APPEND _march_flag_list "barcelona")
++      list(APPEND _march_flag_list "core2")
+       list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma4")
+    elseif(TARGET_ARCHITECTURE STREQUAL "barcelona")
+       list(APPEND _march_flag_list "barcelona")
