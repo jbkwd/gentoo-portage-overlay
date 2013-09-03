@@ -1,6 +1,6 @@
 --- /usr/include/Vc/global.h	2013-03-26 10:45:14.000000000 +0100
-+++ /tmp/global.h	2013-09-03 13:57:54.000000000 +0200
-@@ -97,6 +97,94 @@
++++ /tmp/global.h	2013-09-03 14:21:44.000000000 +0200
+@@ -97,6 +97,97 @@
  #define IMPL_MASK 0xFFF00000
  #define EXT_MASK  0x000FFFFF
  
@@ -80,17 +80,20 @@
 +#  define VC_IMPL_MASK_FMA 0x00000000
 +#endif
 +
-+#define VC_IMPL_MASK (VC_IMPL_MASK_AVX & \
-+                      VC_IMPL_MASK_SSE4_2 & \
-+                      VC_IMPL_MASK_SSE4_1 & \
-+                      VC_IMPL_MASK_SSE3 & \
-+                      VC_IMPL_MASK_SSE2 & \
-+                      VC_IMPL_MASK_FMA4 & \
-+                      VC_IMPL_MASK_XOP & \
-+                      VC_IMPL_MASK_F16C & \
-+                      VC_IMPL_MASK_POPCNT & \
-+                      VC_IMPL_MASK_SSE4a & \
-+                      VC_IMPL_MASK_FMA)
++#define XSTR(s) STR(s)
++#define STR(s) #s
++
++#define VC_IMPL_MASK (XSTR(VC_IMPL_MASK_AVX) & \
++                      XSTR(VC_IMPL_MASK_SSE4_2) & \
++                      XSTR(VC_IMPL_MASK_SSE4_1) & \
++                      XSTR(VC_IMPL_MASK_SSE3) & \
++                      XSTR(VC_IMPL_MASK_SSE2) & \
++                      XSTR(VC_IMPL_MASK_FMA4) & \
++                      XSTR(VC_IMPL_MASK_XOP) & \
++                      XSTR(VC_IMPL_MASK_F16C) & \
++                      XSTR(VC_IMPL_MASK_POPCNT) & \
++                      XSTR(VC_IMPL_MASK_SSE4a) & \
++                      VXSTR(C_IMPL_MASK_FMA))
 +
  #ifdef VC_MSVC
  # ifdef _M_IX86_FP
