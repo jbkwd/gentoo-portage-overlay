@@ -1,52 +1,96 @@
 --- /usr/include/Vc/global.h	2013-03-26 10:45:14.000000000 +0100
-+++ /tmp/global.h	2013-09-03 12:02:44.000000000 +0200
-@@ -97,6 +97,50 @@
++++ /tmp/global.h	2013-09-03 13:57:54.000000000 +0200
+@@ -97,6 +97,94 @@
  #define IMPL_MASK 0xFFF00000
  #define EXT_MASK  0x000FFFFF
  
-+#define VC_IMPL_MASK 0x00000000
-+
 +#if defined(__AVX__)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | AVX)
++#  define VC_IMPL_MASK_AVX AVX
 +#endif
 +#if defined(__SSE4_2__)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE4_2)
++#  define VC_IMPL_MASK_SSE SSE
++#  define VC_IMPL_MASK_SSE4_2 SSE4_2
 +#endif
 +#if defined(__SSE4_1__)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE4_1)
++#  define VC_IMPL_MASK_SSE SSE
++#  define VC_IMPL_MASK_SSE4_1 SSE4_1
 +#endif
 +#if defined(__SSE3__)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE3)
++#  define VC_IMPL_MASK_SSE SSE
++#  define VC_IMPL_MASK_SSE3 SSE3
 +#endif
 +#if defined(__SSSE3__)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSSE3)
++#  define VC_IMPL_MASK_SSE SSE
++#  define VC_IMPL_MASK_SSSE3 SSSE3
 +#endif
 +#if defined(__SSE2__)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE)
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE2)
++#  define VC_IMPL_MASK_SSE SSE
++#  define VC_IMPL_MASK_SSE2 SSE2
 +#endif
 +#ifdef __FMA4__
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | FMA4)
++#  define VC_IMPL_MASK_FMA4 FMA4
 +#endif
 +#ifdef __XOP__
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | XOP)
++#  define VC_IMPL_MASK_XOP XOP
 +#endif
 +#ifdef __F16C__
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | F16C)
++#  define VC_IMPL_MASK_F16C F16C
 +#endif
 +#ifdef __POPCNT__
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | POPCNT)
++#  define VC_IMPL_MASK_POPCNT POPCNT
 +#endif
 +#ifdef __SSE4A__
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | SSE4a)
++#  define VC_IMPL_MASK_SSE4a SSE4a
 +#endif
 +#ifdef __FMA__
-+#  define VC_IMPL_MASK (VC_IMPL_MASK | FMA)
++#  define VC_IMPL_MASK_FMA FMA
 +#endif
++
++#ifndef VC_IMPL_MASK_AVX
++#  define VC_IMPL_MASK_AVX 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_SSE4_2
++#  define VC_IMPL_MASK_SSE4_2 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_SSE4_1
++#  define VC_IMPL_MASK_SSE4_1 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_SSE3
++#  define VC_IMPL_MASK_SSE3 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_SSE2
++#  define VC_IMPL_MASK_SSE2 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_FMA4
++#  define VC_IMPL_MASK_FMA4 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_XOP
++#  define VC_IMPL_MASK_XOP 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_F16C
++#  define VC_IMPL_MASK_F16C 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_POPCNT
++#  define VC_IMPL_MASK_POPCNT 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_SSE4a
++#  define VC_IMPL_MASK_SSE4a 0x00000000
++#endif
++#ifndef VC_IMPL_MASK_FMA
++#  define VC_IMPL_MASK_FMA 0x00000000
++#endif
++
++#define VC_IMPL_MASK (VC_IMPL_MASK_AVX & \
++                      VC_IMPL_MASK_SSE4_2 & \
++                      VC_IMPL_MASK_SSE4_1 & \
++                      VC_IMPL_MASK_SSE3 & \
++                      VC_IMPL_MASK_SSE2 & \
++                      VC_IMPL_MASK_FMA4 & \
++                      VC_IMPL_MASK_XOP & \
++                      VC_IMPL_MASK_F16C & \
++                      VC_IMPL_MASK_POPCNT & \
++                      VC_IMPL_MASK_SSE4a & \
++                      VC_IMPL_MASK_FMA)
 +
  #ifdef VC_MSVC
  # ifdef _M_IX86_FP
