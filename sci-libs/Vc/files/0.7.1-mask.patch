@@ -1,6 +1,15 @@
 --- /usr/include/Vc/global.h	2013-03-26 10:45:14.000000000 +0100
-+++ /tmp/global.h	2013-09-03 14:21:44.000000000 +0200
-@@ -97,6 +97,97 @@
++++ /tmp/global.h	2013-09-03 16:16:51.000000000 +0200
+@@ -17,6 +17,8 @@
+ 
+ */
+ 
++#include<stdio.h>
++
+ #ifndef VC_GLOBAL_H
+ #define VC_GLOBAL_H
+ 
+@@ -97,6 +99,107 @@
  #define IMPL_MASK 0xFFF00000
  #define EXT_MASK  0x000FFFFF
  
@@ -81,20 +90,59 @@
 +#endif
 +
 +#define XSTR(s) STR(s)
-+#define STR(s) #s
++#define STR(s) s
 +
-+#define VC_IMPL_MASK (XSTR(VC_IMPL_MASK_AVX) & \
-+                      XSTR(VC_IMPL_MASK_SSE4_2) & \
-+                      XSTR(VC_IMPL_MASK_SSE4_1) & \
-+                      XSTR(VC_IMPL_MASK_SSE3) & \
-+                      XSTR(VC_IMPL_MASK_SSE2) & \
-+                      XSTR(VC_IMPL_MASK_FMA4) & \
-+                      XSTR(VC_IMPL_MASK_XOP) & \
-+                      XSTR(VC_IMPL_MASK_F16C) & \
-+                      XSTR(VC_IMPL_MASK_POPCNT) & \
-+                      XSTR(VC_IMPL_MASK_SSE4a) & \
-+                      VXSTR(C_IMPL_MASK_FMA))
++#define VC_IMPL_MASK ((VC_IMPL_MASK_AVX)    | \
++                      (VC_IMPL_MASK_SSE4_2) | \
++                      (VC_IMPL_MASK_SSE4_1) | \
++                      (VC_IMPL_MASK_SSE3)   | \
++                      (VC_IMPL_MASK_SSE2)   | \
++                      (VC_IMPL_MASK_FMA4)   | \
++                      (VC_IMPL_MASK_XOP)    | \
++                      (VC_IMPL_MASK_F16C)   | \
++                      (VC_IMPL_MASK_POPCNT) | \
++                      (VC_IMPL_MASK_SSE4a)  | \
++                      (VC_IMPL_MASK_FMA))
++
++#ifndef VC_IMPL
++inline void VC_IMPL_MASK_DEBUG(){
++  printf("VC_IMPL_MASK=%8.8x, VC_IMPL is not set\n",VC_IMPL_MASK);
++}
++#else
++inline void VC_IMPL_MASK_DEBUG(){
++  printf("VC_IMPL_MASK=%8.8x, VC_IMPL=%8.8x\n",VC_IMPL_MASK,VC_IMPL);
++}
++#endif
 +
  #ifdef VC_MSVC
  # ifdef _M_IX86_FP
  #  if _M_IX86_FP >= 1
+@@ -228,22 +331,22 @@
+ #    define VC_IMPL_SSE2 1
+ #    define VC_IMPL_SSE 1
+ #  endif
+-#  if (VC_IMPL & XOP)
++#  if (VC_IMPL & XOP & VC_IMPL_MASK)
+ #    define VC_IMPL_XOP 1
+ #  endif
+-#  if (VC_IMPL & FMA4)
++#  if (VC_IMPL & FMA4 & VC_IMPL_MASK)
+ #    define VC_IMPL_FMA4 1
+ #  endif
+-#  if (VC_IMPL & F16C)
++#  if (VC_IMPL & F16C & VC_IMPL_MASK)
+ #    define VC_IMPL_F16C 1
+ #  endif
+-#  if (VC_IMPL & POPCNT)
++#  if (VC_IMPL & POPCNT & VC_IMPL_MASK)
+ #    define VC_IMPL_POPCNT 1
+ #  endif
+-#  if (VC_IMPL & SSE4a)
++#  if (VC_IMPL & SSE4a & VC_IMPL_MASK)
+ #    define VC_IMPL_SSE4a 1
+ #  endif
+-#  if (VC_IMPL & FMA)
++#  if (VC_IMPL & FMA & VC_IMPL_MASK)
+ #    define VC_IMPL_FMA 1
+ #  endif
+ #  undef VC_IMPL
