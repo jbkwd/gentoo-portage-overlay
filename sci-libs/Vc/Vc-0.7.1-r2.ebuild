@@ -24,6 +24,7 @@ RDEPEND="${COMMON_DEPEND}"
 src_prepare() {
 	epatch "${FILESDIR}/${PV}-CMakeList.txt.patch"
 	epatch "${FILESDIR}/${PV}-fma.patch"
+	epatch "${FILESDIR}/${PV}-fma-opt.patch"
 	epatch "${FILESDIR}/${PV}-fma4.patch"
 	epatch "${FILESDIR}/${PV}-examples3.patch"
 	epatch "${FILESDIR}/${PV}-scalar.patch"
