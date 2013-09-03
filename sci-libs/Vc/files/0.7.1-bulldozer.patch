@@ -14,15 +14,15 @@
        elseif(_cpu_family EQUAL 18) # 12h
        elseif(_cpu_family EQUAL 16) # 10h
 @@ -209,6 +213,12 @@
-       list(APPEND _march_flag_list "bulldozer")
        list(APPEND _march_flag_list "barcelona")
        list(APPEND _march_flag_list "core2")
-+      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma4")
+       list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma4")
 +   elseif(TARGET_ARCHITECTURE STREQUAL "piledriver")
 +      list(APPEND _march_flag_list "bdver2")
 +      list(APPEND _march_flag_list "bulldozer")
 +      list(APPEND _march_flag_list "barcelona")
 +      list(APPEND _march_flag_list "core2")
-       list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma4")
++      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma" "fma4")
     elseif(TARGET_ARCHITECTURE STREQUAL "barcelona")
        list(APPEND _march_flag_list "barcelona")
+       list(APPEND _march_flag_list "core2")

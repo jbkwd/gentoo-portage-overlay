@@ -1,21 +1,5 @@
 --- cmake/OptimizeForArchitecture.cmake	2013-03-26 10:45:14.000000000 +0100
 +++ cmake/OptimizeForArchitecture.cmake	2013-09-03 10:09:20.000000000 +0200
-@@ -203,13 +203,13 @@
-       list(APPEND _march_flag_list "bulldozer")
-       list(APPEND _march_flag_list "barcelona")
-       list(APPEND _march_flag_list "core2")
--      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma4")
-+      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma" "fma4")
-    elseif(TARGET_ARCHITECTURE STREQUAL "bulldozer")
-       list(APPEND _march_flag_list "bdver1")
-       list(APPEND _march_flag_list "bulldozer")
-       list(APPEND _march_flag_list "barcelona")
-       list(APPEND _march_flag_list "core2")
--      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma4")
-+      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma" "fma4")
-    elseif(TARGET_ARCHITECTURE STREQUAL "barcelona")
-       list(APPEND _march_flag_list "barcelona")
-       list(APPEND _march_flag_list "core2")
 @@ -243,9 +243,11 @@
           UserWarning("AVX disabled per default because of old/broken compiler")
           set(AVX_FOUND false)
