@@ -30,6 +30,7 @@ src_prepare() {
 	epatch "${FILESDIR}/${PV}-bulldozer.patch"
 	epatch "${FILESDIR}/${PV}-haswell.patch"
 	epatch "${FILESDIR}/${PV}-fma-opt.patch"
+	epatch "${FILESDIR}/${PV}-mask.patch"
 }
 
 src_configure() {
