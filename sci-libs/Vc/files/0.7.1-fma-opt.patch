@@ -1,5 +1,5 @@
---- /usr/share/cmake/Vc/OptimizeForArchitecture.cmake	2013-03-26 10:45:14.000000000 +0100
-+++ /tmp/OptimizeForArchitecture.cmake	2013-09-03 10:09:20.000000000 +0200
+--- cmake/OptimizeForArchitecture.cmake	2013-03-26 10:45:14.000000000 +0100
++++ cmake/OptimizeForArchitecture.cmake	2013-09-03 10:09:20.000000000 +0200
 @@ -203,13 +203,13 @@
        list(APPEND _march_flag_list "bulldozer")
        list(APPEND _march_flag_list "barcelona")
