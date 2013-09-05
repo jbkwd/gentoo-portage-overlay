@@ -32,6 +32,7 @@ src_prepare() {
 	epatch "${FILESDIR}/${PV}-fma-opt.patch"
 	epatch "${FILESDIR}/${PV}-mask.patch"
 	epatch "${FILESDIR}/${PV}-fma-fix.patch"
+	epatch "${FILESDIR}/${PV}-disable_vector_units.patch"
 }
 
 src_configure() {

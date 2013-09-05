@@ -1,0 +1,97 @@
+diff -urP /var/tmp/portage/sci-libs/Vc-0.7.1-r2/work/Vc-0.7.1/cmake/DisableVectorUnits.cmake /tmp/Vc-0.7.1/cmake/DisableVectorUnits.cmake
+--- cmake/DisableVectorUnits.cmake	1970-01-01 01:00:00.000000000 +0100
++++ cmake/DisableVectorUnits.cmake	2013-09-06 02:27:32.120805805 +0200
+@@ -0,0 +1,72 @@
++# - Disable vector units if they are enabled by VC_IMPL
++# DISABLE_VECTOR_UNITS(<flags> <resul>)
++#  <flags>  - the compiler flag
++#  <result> - variable to store the result
++# 
++
++#=============================================================================
++# Copyright 2013 Jan Buchholz <jan.buchholz@dkfz.de>
++#
++# Redistribution and use in source and binary forms, with or without
++# modification, are permitted provided that the following conditions are
++# met:
++#
++#  * Redistributions of source code must retain the above copyright notice,
++#    this list of conditions and the following disclaimer.
++#
++#  * Redistributions in binary form must reproduce the above copyright notice,
++#    this list of conditions and the following disclaimer in the documentation
++#    and/or other materials provided with the distribution.
++#
++#  * The names of Kitware, Inc., the Insight Consortium, or the names of
++#    any consortium members, or of any contributors, may not be used to
++#    endorse or promote products derived from this software without
++#    specific prior written permission.
++#
++# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS IS''
++# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR
++# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++#=============================================================================
++
++MACRO (DISABLE_VECTOR_UNITS _UNITS _FLAGS _RESULT)
++  SET(DISABLE_VECTOR_UNITS_FLAGS "")
++  STRING(REPLACE "+" ";" __UNITS "${_UNITS}")
++  LIST(APPEND ___UNITS ${__UNITS})
++#  FOREACH(_U IN LISTS ___UNITS)
++#    MESSAGE(STATUS ${_U})
++#  ENDFOREACH() 
++  FOREACH(_U IN LISTS _available_vector_units_list)
++    string(TOUPPER ${_U} __U)
++    STRING(REPLACE "." "_" ___U ${__U})
++    IF(DEFINED "USE_${___U}")
++#      MESSAGE(STATUS "USE_${___U} is defined")
++      STRING(TOLOWER ${___U} ____U)
++      LIST(FIND __UNITS "${___U}" _found)
++      IF(_found EQUAL -1)
++        IF(${___U} MATCHES "(.*)SSE(.*)")
++          LIST(FIND __UNITS "${___U}" _found)
++          IF(_found EQUAL -1)
++            MESSAGE(STATUS "${___U} not in _UNITS but SSE is enabled. Flag will not be disabled!")
++          ELSE()
++            MESSAGE(STATUS "${___U} not in _UNITS, flag will be disabled!")
++            AddCompilerFlag("-mno-${____U}" CXX_FLAGS DISABLE_VECTOR_UNITS_FLAGS)
++          ENDIF()  
++        ELSE()
++          MESSAGE(STATUS "${___U} not in _UNITS, flag will be disabled!")
++          AddCompilerFlag("-mno-${____U}" CXX_FLAGS DISABLE_VECTOR_UNITS_FLAGS)
++        ENDIF()
++      ENDIF()
++    ELSE()
++#      MESSAGE(STATUS "USE_${___U} is not defined")
++    ENDIF()
++  ENDFOREACH() 
++#  MESSAGE(STATUS "${DISABLE_VECTOR_UNITS_FLAGS}")
++  SET("${_RESULT}" "${DISABLE_VECTOR_UNITS_FLAGS}")
++ENDMACRO (DISABLE_VECTOR_UNITS)
+\ No newline at end of file
+diff -urP /var/tmp/portage/sci-libs/Vc-0.7.1-r2/work/Vc-0.7.1/tests/CMakeLists.txt /tmp/Vc-0.7.1/tests/CMakeLists.txt
+--- tests/CMakeLists.txt	2013-09-06 02:27:41.776805219 +0200
++++ tests/CMakeLists.txt	2013-09-06 02:27:32.119805805 +0200
+@@ -1,4 +1,5 @@
+ include(AddFileDependencies)
++INCLUDE(DisableVectorUnits)
+ 
+ add_definitions(-DCOMPILE_FOR_UNIT_TESTS) # -DVC_CHECK_ALIGNMENT)
+ if(Vc_COMPILER_IS_MSVC)
+@@ -150,6 +151,10 @@
+       add_executable(sse2_blend sse_blend.cpp)
+       add_target_property(sse2_blend COMPILE_FLAGS "-DVC_IMPL=SSE2")
+       add_target_property(sse2_blend LABELS "SSE")
++
++      DISABLE_VECTOR_UNITS("SSE2" "" "_DISABLE_FLAGS")
++      add_target_property(sse2_blend COMPILE_FLAGS "${_DISABLE_FLAGS}")
++
+       add_dependencies(SSE sse2_blend)
+       add_test(sse2_blend "${CMAKE_CURRENT_BINARY_DIR}/sse2_blend")
+       set_property(TEST sse2_blend PROPERTY LABELS "SSE")
