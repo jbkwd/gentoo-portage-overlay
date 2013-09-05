@@ -107,3 +107,15 @@
  vc_determine_compiler()
  
  if(ROOT_RELEASE)
+--- CMakeLists.txt	2013-09-05 18:14:15.822602641 +0200
++++ CMakeLists.txt	2013-09-05 18:19:40.483582930 +0200
+@@ -120,7 +120,7 @@
+    set(libvc_compile_flags "-DVC_COMPILE_LIB")
+    AddCompilerFlag("-fPIC" CXX_FLAGS libvc_compile_flags)
+    vc_compile_for_all_implementations(_objs src/trigonometric.cpp FLAGS ${libvc_compile_flags}
+-      ONLY SSE2 SSE3 SSSE3 SSE4_1 AVX SSE+XOP+FMA4 AVX+XOP+FMA4)
++      ONLY SSE2 SSE3 SSSE3 SSE4_1 AVX SSE+XOP+FMA4 AVX+XOP+FMA4 AVX+XOP+FMA AVX+FMA SSE+XOP+FMA SSE+FMA)
+    # add AVX+XOP+FMA AVX+FMA once there's a check in place whether the assembler can handle FMA instructions
+    set(_srcs src/const.cpp src/cpuid.cpp src/support.cpp ${_objs})
+    if(USE_AVX)
+
