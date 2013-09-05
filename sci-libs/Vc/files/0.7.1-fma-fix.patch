@@ -94,3 +94,16 @@
  							m128i lo = _mm_macc_epi32(lo128(v2),lo128(v3),lo128(v4));
  							m128i hi = _mm_macc_epi32(hi128(v2),hi128(v3),hi128(v4));
                v1 = AVX::concat(lo,hi);
+--- CMakeLists.txt  2013-09-05 18:08:23.667624021 +0200
++++ CMakeLists.txt 2013-09-05 18:09:08.878621276 +0200
+@@ -16,6 +16,10 @@
+ include (AddTargetProperty)
+ include (OptimizeForArchitecture)
+ 
++#when eg. -march=native is set, his will interrupt autodetection and lead to 
++#intrinsics.h:124:2: error: #error "SSE3 was disabled but something includes <pmmintrin.h>. Please fix your code."
++string (REGEX REPLACE "-march=[a-zA-Z0-9]* " "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
++
+ vc_determine_compiler()
+ 
+ if(ROOT_RELEASE)
