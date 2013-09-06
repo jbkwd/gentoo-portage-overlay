@@ -1,5 +1,5 @@
---- /dev/null   2013-09-03 00:21:50.439084647 +0200
-+++ /var/tmp/portage/sci-libs/Vc-0.7.1-r2/work/Vc-0.7.1/cmake/DisableVectorUnits.cmake  2013-09-06 19:48:14.440014838 +0200
+--- cmake/DisableVectorUnits.cmake	2013-09-03 00:21:50.439084647 +0200
++++ cmake/DisableVectorUnits.cmake	2013-09-06 19:48:14.440014838 +0200
 @@ -0,0 +1,95 @@
 +# - Disable vector units if they are enabled by VC_IMPL
 +# DISABLE_VECTOR_UNITS(<flags> <resul>)
