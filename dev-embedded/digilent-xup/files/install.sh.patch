@@ -162,6 +162,7 @@
  	cp -f "${szDlcSrc}" "${szDlcDst}" && \
  	chmod 644 "${szDlcDst}/$(basename ${szDlcSrc})"
  	if (( $? ))
+
 --- install.sh  2014-01-21 16:47:38.579134731 +0100
 +++ install.new.sh      2014-01-21 17:04:43.689082270 +0100
 @@ -1577,13 +1577,13 @@
