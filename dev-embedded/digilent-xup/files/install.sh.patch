@@ -162,3 +162,26 @@
  	cp -f "${szDlcSrc}" "${szDlcDst}" && \
  	chmod 644 "${szDlcDst}/$(basename ${szDlcSrc})"
  	if (( $? ))
+--- install.sh  2014-01-21 16:47:38.579134731 +0100
++++ install.new.sh      2014-01-21 17:04:43.689082270 +0100
+@@ -1577,13 +1577,13 @@
+ if [ -n "${szDlcSrc}" ]
+ then
+ 
+-       /sbin/ldconfig
+-       if (( $? ))
+-       then
++       #/sbin/ldconfig
++       #if (( $? ))
++       #then
+                echo "error: failed to update dynamic loader cache. Please reboot your system after installation 
+completes"
+-       else
+-               echo "Successfully updated dynamic loader cache."
+-       fi
++       #else
++       #       echo "Successfully updated dynamic loader cache."
++       #fi
+ fi
+ 
+ ###########################################################################
