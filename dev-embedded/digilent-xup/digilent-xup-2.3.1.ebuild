@@ -19,6 +19,10 @@ RDEPEND="${COMMON_DEPEND}"
 MY_P="digilent.adept.runtime_2.13.1-x86_64"
 S="${WORKDIR}/${MY_P}"
 
+src_prepare() {
+    epatch "${FILESDIR}"/install.sh.patch
+}
+
 src_compile() {
 	return
 }

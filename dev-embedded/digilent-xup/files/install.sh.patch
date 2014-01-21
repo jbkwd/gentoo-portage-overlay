@@ -1,0 +1,164 @@
+--- install.sh	2013-04-19 23:42:01.000000000 +0200
++++ install.new.sh	2014-01-21 16:25:49.857449855 +0100
+@@ -255,8 +255,10 @@
+ szDataDst=""
+ szLibDst=""
+ szSbinDst=""
++szPrefix=""
+ szSilent="silent=0"
+ 
++
+ # Go through the list of command line arguments and parse them.
+ for szArg in "$@"
+ do
+@@ -267,6 +269,8 @@
+ 			szLibDst=$(echo ${szArg} | sed 's/libpath=//');;
+ 		sbinpath=* )
+ 			szSbinDst=$(echo ${szArg} | sed 's/sbinpath=//');;
++	        prefix=* )
++		        szPrefix=$(echo ${szArg} | sed 's/prefix=//');;
+ 		silent=1 )
+ 			szSilent="silent=1";
+ 			let fNotSilent=0;;
+@@ -442,7 +446,7 @@
+ do
+ 	if [ ! -L "${szLibSrc}/${rgszLibs[${i}]}" ]
+ 	then
+-		./install-slib.sh "${szLibSrc}/${rgszLibs[${i}]}" "${rgszLibDst[${iszLibDst}]}" "${szSilent}"
++		./install-slib.sh "${szLibSrc}/${rgszLibs[${i}]}" "${szPrefix}/${rgszLibDst[${iszLibDst}]}" "${szSilent}"
+ 		let ret=$?
+ 		if (( $ret ))
+ 		then
+@@ -646,7 +650,7 @@
+ while (( ! $fSbinInstalled ))
+ do
+ 	# Create the destination directory if it doesn't exist.
+-	mkdir -p "${rgszSbinDst[${iszSbinDst}]}"
++	mkdir -p "${szPrefix}/${rgszSbinDst[${iszSbinDst}]}"
+ 	let ret=$?
+ 	
+ 	if (( ! $ret ))
+@@ -654,8 +658,8 @@
+ 		# We successfully created the destination directory or it already
+ 		# existed. Install the binaries.
+ 		
+-		cp -f "${szSbinSrc}/dftdrvdtch" "${rgszSbinDst[${iszSbinDst}]}" && \
+-		chmod 755 "${rgszSbinDst[${iszSbinDst}]}/dftdrvdtch"
++		cp -f "${szSbinSrc}/dftdrvdtch" "${szPrefix}/${rgszSbinDst[${iszSbinDst}]}" && \
++		chmod 755 "${szPrefix}/${rgszSbinDst[${iszSbinDst}]}/dftdrvdtch"
+ 		let ret=$?
+ 	fi
+ 	
+@@ -790,7 +794,7 @@
+ 
+ let iszDataDst=0
+ szFwiSrc="data/firmware"
+-szFwiDst="${rgszDataDst[${iszDataDst}]%/}/firmware"
++szFwiDst="${szPrefix}/${rgszDataDst[${iszDataDst}]%/}/firmware"
+ 
+ let fFwiInst=0
+ while (( ! $fFwiInst ))
+@@ -821,7 +825,7 @@
+ 			exit 4
+ 		fi
+ 		
+-		szFwiDst="${rgszDataDst[${iszDataDst}]%/}/firmware"
++		szFwiDst="${szPrefix}/${rgszDataDst[${iszDataDst}]%/}/firmware"
+ 	else
+ 		# The firmware images were successfully installed.
+ 		
+@@ -838,7 +842,7 @@
+ # installed the firmware images in the currently selected directory.
+ 
+ szJdlSrc="data/jtscdvclist.txt"
+-szJdlDst="${rgszDataDst[${iszDataDst}]%/}"
++szJdlDst="${szPrefix}/${rgszDataDst[${iszDataDst}]%/}"
+ 
+ echo "Installing JTSC device list....."
+ 
+@@ -853,7 +857,7 @@
+ # Install CoolRunner support files.
+ 
+ szCrsfSrc="data/xpla3"
+-szCrsfDst="${rgszDataDst[${iszDataDst}]%/}/xpla3"
++szCrsfDst="${szPrefix}/${rgszDataDst[${iszDataDst}]%/}/xpla3"
+ 
+ echo "Installing CoolRunner support files....."
+ 
+@@ -868,7 +872,7 @@
+ # Install CoolRunner 2 support files.
+ 
+ szCr2sfSrc="data/xbr"
+-szCr2sfDst="${rgszDataDst[${iszDataDst}]%/}/xbr"
++szCr2sfDst="${szPrefix}/${rgszDataDst[${iszDataDst}]%/}/xbr"
+ 
+ echo "Installing CoolRunner 2 support files....."
+ 
+@@ -968,7 +972,7 @@
+ ###########################################################################
+ # Install Adept Runtime configuration file.
+ 
+-szAdcDstDef="/etc"
++szAdcDstDef="${szPrefix}/etc"
+ szAdcDst="${szAdcDstDef}"
+ 
+ if (( $fNotSilent ))
+@@ -997,6 +1001,7 @@
+ 
+ echo "Installing Adept Runtime configuration....."
+ 
++mkdir -p ${szAdcDstDef} && \
+ cp -f ${szAdcSrc} ${szAdcDst} && \
+ chmod 644 ${szAdcDst}/$(basename ${szAdcSrc})
+ 
+@@ -1045,7 +1050,7 @@
+ 
+ 	szUurSrc="52-digilent-usb.rules"
+ 	szUurTmp="52-digilent-usb.rules.tmp"
+-	szUurDst="/etc/udev/rules.d/52-digilent-usb.rules"
++	szUurDst="${szPrefix}/etc/udev/rules.d/52-digilent-usb.rules"
+ 
+ 	# If the temporary file exists we must remove it before continuing.
+ 	if [ -e "${szUurTmp}" ]
+@@ -1228,6 +1233,7 @@
+ 	then
+ 		echo "Installing USB UDEV rules....."
+ 	
++                mkdir -p $(dirname ${szUurDst}) && \
+ 		cp -f ${szUurSrc} ${szUurDst} && \
+ 		chmod 644 ${szUurDst}
+ 	
+@@ -1277,7 +1283,7 @@
+ 	# binaries.	
+ 	szHpsSrc="digilentusb"
+ 	szHpsTmp="digilentusb.tmp"
+-	szHpsDst="/etc/hotplug/usb/digilentusb"
++	szHpsDst="${szPrefix}/etc/hotplug/usb/digilentusb"
+ 	
+ 	# Make sure the template file is present.
+ 	if [ ! -f "${szHpsSrc}" ]
+@@ -1327,6 +1333,7 @@
+ 	# Install the hotplug script.
+ 	echo "Installing hotplug script....."
+ 	
++	mkdir -p $(dirname ${szHpsDst}) && \
+ 	cp -f ${szHpsSrc} ${szHpsDst} && \
+ 	chmod 755 ${szHpsDst}
+ 	if (( $? ))
+@@ -1483,7 +1490,7 @@
+ ###########################################################################
+ # Install dynamic loader configuration.
+ 
+-szDlcDst="/etc/ld.so.conf.d"
++szDlcDst="${szPrefix}/etc/ld.so.conf.d"
+ 
+ # We only need to install a dynamic loader configuration file if an
+ # existing installation of the shared libraries wasn't found during
+@@ -1492,6 +1499,7 @@
+ then
+ 	echo "Installing dynamic loader configuration....."
+ 
++	mkdir -p ${szDlcDst} && \
+ 	cp -f "${szDlcSrc}" "${szDlcDst}" && \
+ 	chmod 644 "${szDlcDst}/$(basename ${szDlcSrc})"
+ 	if (( $? ))
