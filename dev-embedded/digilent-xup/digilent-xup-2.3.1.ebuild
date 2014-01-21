@@ -4,6 +4,8 @@
 
 EAPI="3"
 
+inherit eutils
+
 DESCRIPTION="Digilent Adept2 Runtime"
 HOMEPAGE="http://www.digilentinc.com/Products/Detail.cfm?NavPath=2,66,828&Prod=ADEPT2"
 SRC_URI="http://www.digilentinc.com/Data/Products/ADEPT2/digilent.adept.runtime_2.13.1-x86_64.tar.gz"
