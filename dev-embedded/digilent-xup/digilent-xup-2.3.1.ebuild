@@ -35,5 +35,5 @@ src_install()
 		"datapath=/usr/local/share/digilent/data" \
 		"libpath=/usr/lib64/" \
 		"sbinpath=/usr/sbin/" \
-		"prefix=${DISTDIR}"
+		"prefix=${D}"
 }
