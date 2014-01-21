@@ -30,7 +30,8 @@ src_compile() {
 src_install()
 {
 	./install.sh "silent=1" \
-		"datapath=${DISTDIR}/usr/local/share/digilent/data" \
-		"libpath=${DISTDIR}/usr/lib64/" \
-		"sbinpath=${DISTDIR}/usr/sbin/"
+		"datapath=/usr/local/share/digilent/data" \
+		"libpath=/usr/lib64/" \
+		"sbinpath=/usr/sbin/" \
+		"prefix=${DISTDIR}"
 }
