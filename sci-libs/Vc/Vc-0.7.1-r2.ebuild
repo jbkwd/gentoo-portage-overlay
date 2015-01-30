@@ -34,7 +34,7 @@ src_prepare() {
 	epatch "${FILESDIR}/${PV}-fma-fix.patch"
 	epatch "${FILESDIR}/${PV}-disable_vector_units.patch"
 	epatch "${FILESDIR}/${PV}-popcnt.patch"
-	epatch "${FILESDIR}/${PV}-piledriver-popcnt.patch"
+        epatch "${FILESDIR}/${PV}-piledriver_popcnt.patch"
 }
 
 src_configure() {
