@@ -1,5 +1,5 @@
---- cmake/OptimizeForArchitecture.cmake.orig	2015-01-30 17:45:07.413417552 +0100
-+++ cmake/OptimizeForArchitecture.cmake	2015-01-30 17:47:09.965669391 +0100
+--- /var/tmp/portage/sci-libs/Vc-0.7.1-r2/work/Vc-0.7.1/cmake/OptimizeForArchitecture.cmake.orig	2015-01-30 17:45:07.413417552 +0100
++++ /var/tmp/portage/sci-libs/Vc-0.7.1-r2/work/Vc-0.7.1/cmake/OptimizeForArchitecture.cmake	2015-01-30 17:47:09.965669391 +0100
 @@ -226,7 +226,7 @@
        list(APPEND _march_flag_list "bulldozer")
        list(APPEND _march_flag_list "barcelona")
