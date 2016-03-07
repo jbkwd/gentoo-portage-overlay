@@ -6,7 +6,7 @@ EAPI=5
 inherit eutils git-r3 qmake-utils
 SLOT=0
 
-EGIT_REPO_URI="https://github.com/jkriege2/QuickFit3.git"
+EGIT_REPO_URI="https://github.com/jbkwd/QuickFit3.git"
 
 DESCRIPTION="A data evaluation package for (imaging) fluorescence correlation spectroscopy and other biophysical methods"
 HOMEPAGE="http://www.dkfz.de/Macromol/quickfit/"
@@ -27,12 +27,14 @@ sci-libs/gsl
 sys-libs/zlib
 media-libs/libpng
 media-libs/tiff
-virtual/jpeg"
+virtual/jpeg
+sci-libs/blas-reference
+sci-libs/lapack-reference"
 
 RDEPEND="${DEPEND}"
 
 src_compile() {
 	cd "${WORKDIR}/${PN}"
-	eqmake5 || die "eqmake failed"
+	eqmake5 quickfit3.pro || die "eqmake failed"
 	emake || die "emake failed"
 }
