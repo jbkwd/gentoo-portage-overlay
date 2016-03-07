@@ -30,7 +30,8 @@ media-libs/libpng
 media-libs/tiff
 virtual/jpeg
 sci-libs/blas-reference
-sci-libs/lapack-reference"
+sci-libs/lapack-reference
+sci-libs/nlopt"
 
 RDEPEND="${DEPEND}"
 
