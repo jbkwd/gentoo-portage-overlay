@@ -4,11 +4,11 @@
   <repo quality="experimental" status="unofficial">
     <name><![CDATA[jbkwd-overlay]]></name>
     <description lang="en"><![CDATA[JBKWD overlay]]></description>
-    <homepage>http://github.com/kbkwd/gentoo-portage-overlay.git</homepage>
+    <homepage>http://github.com/jbkwd/gentoo-portage-overlay.git</homepage>
     <owner type="person">
       <email>jbkwd@microlexx.de</email>
       <name><![CDATA[JBKWD]]></name>
     </owner>
-    <source type="git">git://github.com/kbkwd/gentoo-portage-overlay.git</source>
+    <source type="git">git://github.com/jbkwd/gentoo-portage-overlay.git</source>
   </repo>
 </repositories>
