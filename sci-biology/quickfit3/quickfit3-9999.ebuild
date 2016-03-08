@@ -35,14 +35,30 @@ sci-libs/lapack-reference
 
 RDEPEND="${DEPEND}"
 
+src_prepare() {
+#	cd "${WORKDIR}/${PN}"
+	sed -i -e "s#^OUTPUTDIR_NAME = .*#OUTPUTDIR_NAME = ${D}/opt/QuickFit3#g" quickfit_config.pri || die "Failed to set OUTPUTDIR_NAME!"
+}
+
 src_compile() {
 	cd "${WORKDIR}/${PN}"
 	eqmake5 quickfit3.pro || die "eqmake failed"
-	emake
-	emake
+	ewarn "Running make three times now for some issues. The first two are nonfatal."
+	nonfatal emake
+	nonfatal emake
 	emake || die "emake failed"
 }
 
 src_install() {
-    emake DESTDIR="${D}/opt/QuickFit3" install
+	emake -j1 install
+	
+	# Create /usr/bin/firefox-bin
+	dodir /usr/bin/
+	cat <<-EOF >"${ED}"usr/bin/${PN}
+	#!/bin/sh
+	unset LD_PRELOAD
+	LD_LIBRARY_PATH="/opt/QuickFit3/"
+	exec /opt/QuickFit3/quickfit3 "\$@"
+	EOF
+	fperms 0755 /usr/bin/${PN}
 }
