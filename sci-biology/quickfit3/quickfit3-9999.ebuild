@@ -38,7 +38,8 @@ RDEPEND="${DEPEND}"
 src_compile() {
 	cd "${WORKDIR}/${PN}"
 	eqmake5 quickfit3.pro || die "eqmake failed"
-	emake || einfo "Invoking make for the first time failed, second iteration..."
+	emake
+	emake
 	emake || die "emake failed"
 }
 
