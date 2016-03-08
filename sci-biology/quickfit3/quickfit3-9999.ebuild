@@ -19,7 +19,7 @@ dev-qt/qtopengl:5
 dev-qt/qtwidgets:5 
 dev-qt/qtprintsupport:5
 dev-qt/qtconcurrent:5
-dev-cpp/eigen:3
+>=dev-cpp/eigen-3.2.5
 sci-libs/lmfit
 media-libs/cimg
 x11-libs/cairo
