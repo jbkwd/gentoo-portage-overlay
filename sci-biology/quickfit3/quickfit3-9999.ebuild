@@ -31,12 +31,19 @@ media-libs/tiff
 virtual/jpeg
 sci-libs/blas-reference
 sci-libs/lapack-reference
-sci-libs/nlopt"
+>=sci-libs/nlopt-2.4.2"
 
 RDEPEND="${DEPEND}"
 
 src_compile() {
 	cd "${WORKDIR}/${PN}"
 	eqmake5 quickfit3.pro || die "eqmake failed"
+	einfo "Invoking make for the first time. This will fail for some reason..."
+	emake
+	einfo "Invoking make for the second time. Reduce number of parallel make threads in case of failure."
 	emake || die "emake failed"
+}
+
+src_install() {
+    emake DESTDIR="${D}/opt/QuickFit3" install
 }
