@@ -21,6 +21,7 @@ dev-qt/qtprintsupport:5
 dev-qt/qtconcurrent:5
 >=dev-cpp/eigen-3.2.5
 sci-libs/lmfit
+sci-libs/levmar
 media-libs/cimg
 x11-libs/cairo
 dev-libs/libusb
