@@ -1,0 +1,17 @@
+--- src/Makefile.am.orig	2013-05-15 20:01:29.624017100 +0200
++++ src/Makefile.am	2013-05-15 20:01:40.303017224 +0200
+@@ -18,14 +18,12 @@
+ install-exec-hook:
+ 	@if test -e "${LIBDWARF_DIR}libdwarf.so"; then \
+ 		install -pD -m 755 ${LIBDWARF_DIR}libdwarf.so $(DESTDIR)$(prefix)/lib/libdwarf.so ; \
+-		/sbin/ldconfig ;\
+ 	fi
+ 
+ uninstall-hook:
+ 	@if test -e "${LIBDWARF_DIR}libdwarf.so"; then \
+ 		if test -e "$(DESTDIR)$(prefix)/lib/libdwarf.so"; then \
+ 			rm -f $(DESTDIR)$(prefix)/lib/libdwarf.so ; \
+-			/sbin/ldconfig ; \
+ 		fi ; \
+ 	fi
+ 

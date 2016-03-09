@@ -18,24 +18,11 @@ DESCRIPTION="The open64 compiler suite, based on Pathscale's EKO compiler"
 HOMEPAGE="http://open64.net"
 
 DEPEND=""
-RDEPEND=""
+RDEPEND="!dev-lang/open64"
 
-SRC_URI="x86_open64-4.5.2.1-1.src.tar.bz2"
+SRC_URI="x86_open64-4.5.2.1-1.x86_64.tar.bz2"
 S="$WORKDIR/x86_open64-4.5.2.1"
 
-EPREFIX=${D}
-
-src_prepare() {
-    append-cppflags -DOPEN64_MOD
-    epatch "${FILESDIR}/${P}.patch"
-}
-
-#src_compile() {
-#    if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then
-#        emake || die "emake failed"
-#    fi
-#}
-
 src_install() {
-    emake -j1 DESTDIR="${D}" install || die "Install failed"
+  mv ${S} ${D}/usr || die
 }

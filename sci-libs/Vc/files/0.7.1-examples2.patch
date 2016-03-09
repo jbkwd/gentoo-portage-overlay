@@ -1,0 +1,18 @@
+--- CMakeLists.txt	2013-06-18 14:37:14.304300005 +0200
++++ CMakeLists.new.txt	2013-06-18 14:57:23.496795473 +0200
+@@ -245,7 +245,6 @@
+       cmake/FindVc.cmake
+       DESTINATION share/cmake/Vc
+       )
+-   install(DIRECTORY examples/ DESTINATION examples)
+ endif()
+ 
+ if(NOT ROOT_RELEASE)
+@@ -258,6 +257,7 @@
+    set(BUILD_EXAMPLES FALSE CACHE BOOL "Build examples.")
+    if(BUILD_EXAMPLES)
+       add_subdirectory(examples)
++      install(DIRECTORY examples/ DESTINATION examples)
+    endif(BUILD_EXAMPLES)
+ endif()
+ 

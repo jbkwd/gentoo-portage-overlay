@@ -1,0 +1,10 @@
+--- CMakeLists.txt	2013-06-18 11:52:00.983285675 +0200
++++ CMakeLists.new.txt	2013-06-18 14:29:12.328465855 +0200
+@@ -245,6 +245,7 @@
+       cmake/FindVc.cmake
+       DESTINATION share/cmake/Vc
+       )
++   install(DIRECTORY examples/ DESTINATION examples)
+ endif()
+ 
+ if(NOT ROOT_RELEASE)

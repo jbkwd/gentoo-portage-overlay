@@ -1,0 +1,87 @@
+diff -urP /mnt/test/CAorig/src/CAPerf/src/PerfData/PerfDataReader.h /mnt/test/CAnew/src/CAPerf/src/PerfData/PerfDataReader.h
+--- src/CAPerf/src/PerfData/PerfDataReader.h	2013-05-14 16:28:08.000000000 +0200
++++ src/CAPerf/src/PerfData/PerfDataReader.h	2013-05-14 16:20:37.000000000 +0200
+@@ -2,6 +2,7 @@
+ #define _PERFDATAREADER_H_
+ 
+ #include <stdint.h>
++#include <sys/types.h>
+ 
+ #include <string>
+ #include <vector>
+diff -urP /mnt/test/CAorig/src/ca/cg/Makefile.am /mnt/test/CAnew/src/ca/cg/Makefile.am
+--- src/ca/cg/Makefile.am	2013-05-14 16:28:11.000000000 +0200
++++ src/ca/cg/Makefile.am	2013-05-14 16:20:39.000000000 +0200
+@@ -26,7 +26,7 @@
+ 	cgcvt.cpp
+ 
+ 
+-cgreport_LDFLAGS = -Wl -fPIC @QT_LDFLAGS@ -Wl,-rpath,'$$ORIGIN/../lib'
++cgreport_LDFLAGS = -fPIC @QT_LDFLAGS@ -Wl,-rpath,'$$ORIGIN/../lib'
+ 
+ AM_CPPFLAGS= $(INCLUDES) $(more_flags) \
+ 			 $(FLAG64) -Wno-unused -Wno-parentheses \
+diff -urP /mnt/test/CAorig/src/ca/gui/MonitorDockView.cpp /mnt/test/CAnew/src/ca/gui/MonitorDockView.cpp
+--- src/ca/gui/MonitorDockView.cpp	2013-05-14 16:28:12.000000000 +0200
++++ src/ca/gui/MonitorDockView.cpp	2013-05-14 16:20:40.000000000 +0200
+@@ -16,6 +16,7 @@
+ // Place, Suite 330, Boston, MA 02111-1307 USA.
+ */
+ 
++#include <unistd.h>
+ #include <qtooltip.h>
+ 
+ #include "MonitorDockView.h"
+diff -urP /mnt/test/CAorig/src/ca/libs/libca/dwarfengine.cpp /mnt/test/CAnew/src/ca/libs/libca/dwarfengine.cpp
+--- src/ca/libs/libca/dwarfengine.cpp	2013-05-14 16:28:10.000000000 +0200
++++ src/ca/libs/libca/dwarfengine.cpp	2013-05-14 16:20:39.000000000 +0200
+@@ -20,6 +20,7 @@
+ #include <stdio.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <unistd.h>
+ #include <fcntl.h>
+ 
+ #include "dwarfengine.h"
+diff -urP /mnt/test/CAorig/src/ca/libs/libopdata/opdata_handler.cpp /mnt/test/CAnew/src/ca/libs/libopdata/opdata_handler.cpp
+--- src/ca/libs/libopdata/opdata_handler.cpp	2013-05-14 16:28:10.000000000 +0200
++++ src/ca/libs/libopdata/opdata_handler.cpp	2013-05-14 16:20:39.000000000 +0200
+@@ -18,6 +18,7 @@
+ // Place, Suite 330, Boston, MA 02111-1307 USA.
+ */
+ 
++#include <unistd.h>
+ 
+ #include <stdlib.h>
+ #include <vector>
+diff -urP /mnt/test/CAorig/src/ca_agent/libCAagent/slock.cpp /mnt/test/CAnew/src/ca_agent/libCAagent/slock.cpp
+--- src/ca_agent/libCAagent/slock.cpp	2013-05-14 16:28:09.000000000 +0200
++++ src/ca_agent/libCAagent/slock.cpp	2013-05-14 16:20:37.000000000 +0200
+@@ -13,6 +13,7 @@
+ #include <sys/ipc.h>
+ #include <sys/sem.h>
+ #include <sys/stat.h>
++#include <unistd.h>
+ 
+ #include "slock.h"
+ #include "smm.h"
+--- src/ca/scripts/Setup.sh.orig	2012-07-06 06:21:33.000000000 +0200
++++ src/ca/scripts/Setup.sh	2013-05-15 01:49:54.830457381 +0200
+@@ -106,7 +106,7 @@
+ ARCH=`uname -m`
+ print_action "Adding $CA_LIB to /etc/ld.so.conf.d/codeanalyst-$ARCH.conf"
+ if test -d /etc/ld.so.conf.d/ ; then
+-	echo $CA_LIB > /etc/ld.so.conf.d/codeanalyst-$ARCH.conf
++	mkdir -p ${D}/etc/ld.so.conf.d && echo $CA_LIB > ${D}/etc/ld.so.conf.d/codeanalyst-$ARCH.conf
+ 	RETVAL=$?; print_ok_no $RETVAL 
+ else
+ 	print_result "directory /etc/ld.so.conf.d does not exists"
+--- src/ca/scripts/Setup.sh.orig	2013-05-15 02:01:08.134415546 +0200
++++ src/ca/scripts/Setup.sh	2013-05-15 02:01:22.021414683 +0200
+@@ -117,7 +117,7 @@
+ # Running ldconfig
+ #
+ print_action "Running ldconfig"
+-/sbin/ldconfig
++#/sbin/ldconfig
+ RETVAL=$?; print_ok_no $RETVAL 

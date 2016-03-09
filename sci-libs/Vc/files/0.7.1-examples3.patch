@@ -1,0 +1,30 @@
+--- examples/CMakeLists.txt	2013-06-18 15:16:32.319847269 +0200
++++ examples/CMakeLists.new.txt	2013-06-18 15:29:21.731477330 +0200
+@@ -23,9 +23,11 @@
+       endif()
+    endforeach()
+    add_executable("example_${name}_default" ${_SRCS})
++   INSTALL(TARGETS "example_${name}_default" DESTINATION bin)
+    target_link_libraries("example_${name}_default" Vc ${_LIBS})
+ 
+    add_executable("example_${name}_scalar" ${_SRCS})
++   INSTALL(TARGETS "example_${name}_scalar" DESTINATION bin)
+    add_target_property("example_${name}_scalar" COMPILE_FLAGS "-DVC_IMPL=Scalar")
+    add_target_property("example_${name}_scalar" LABELS "Scalar")
+    add_dependencies(Scalar "example_${name}_scalar")
+@@ -33,6 +35,7 @@
+ 
+    if(USE_SSE2)
+       add_executable("example_${name}_sse" ${_SRCS})
++      INSTALL(TARGETS "example_${name}_sse" DESTINATION bin)
+       add_target_property("example_${name}_sse" COMPILE_FLAGS "-DVC_IMPL=SSE")
+       add_target_property("example_${name}_sse" LABELS "SSE")
+       add_dependencies(SSE "example_${name}_sse")
+@@ -41,6 +44,7 @@
+ 
+    if(USE_AVX)
+       add_executable("example_${name}_avx" ${_SRCS})
++      INSTALL(TARGETS "example_${name}_avx" DESTINATION bin)
+       add_target_property("example_${name}_avx" COMPILE_FLAGS "-DVC_IMPL=AVX")
+       add_target_property("example_${name}_avx" LABELS "AVX")
+       add_dependencies(AVX "example_${name}_avx")

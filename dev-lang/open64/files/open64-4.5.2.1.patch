@@ -18,3 +18,59 @@
  ipl_summarize_util.o: OPTIMIZER += -CG:all_sched=0
 +endif
 \ No newline at end of file
+--- /tmp/x86_open64-4.5.2.1/osprey/libhugetlbfs/Makefile.gbase.orig	2013-08-14 11:16:52.039403978 +0200
++++ /tmp/x86_open64-4.5.2.1/osprey/libhugetlbfs/Makefile.gbase	2013-08-14 11:17:18.643733676 +0200
+@@ -39,7 +39,7 @@
+ 
+ INSTALL = install
+ 
+-LDFLAGS += -Wl,--no-undefined-version -Wl,--version-script=$(BUILD_BASE)/version.lds
++LDFLAGS ?= -Wl,--no-undefined-version -Wl,--version-script=$(BUILD_BASE)/version.lds
+ CFLAGS ?= -O2 -g -DOPEN64_MOD -DM_PAGE
+ CFLAGS += -Wall -fPIC
+ CPPFLAGS += -D__LIBHUGETLBFS__ -I.
+--- /tmp/x86_open64-4.5.2.1/Makefile.in.orig	2013-08-14 17:51:22.132316430 +0200
++++ /tmp/x86_open64-4.5.2.1/Makefile.in	2013-08-14 17:53:10.509565901 +0200
+@@ -351,7 +351,7 @@
+ 
+ ifeq ($(BUILD_TARGET), SL)
+ install:
+-	export TOOLROOT=@prefix@; \
++	export TOOLROOT=$(DESTDIR)@prefix@; \
+ 	export TOP_SRCDIR=$(TOP_SRCDIR); \
+ 		$(TOP_SRCDIR)/INSTALL.cross.sl @abs_top_builddir@
+ else
+@@ -384,12 +384,12 @@
+ endif
+ 
+ install_compiler:
+-	export TOOLROOT=@prefix@; \
++	export TOOLROOT=$(DESTDIR)@prefix@; \
+ 	export TOP_SRCDIR=$(TOP_SRCDIR); \
+ 		$(TOP_SRCDIR)/install_compiler.sh $(MACHINE_TYPE) $(if $(BUILD_FORTRAN),"YES","NO") @CROSS_TARGET@ 
+ endif
+ install-cross:
+-	export TOOLROOT=@prefix@; $(TOP_SRCDIR)/install_compiler.sh ia64-cross $(if $(BUILD_FORTRAN),"YES","NO")
++	export TOOLROOT=$(DESTDIR)@prefix@; $(TOP_SRCDIR)/install_compiler.sh ia64-cross $(if $(BUILD_FORTRAN),"YES","NO")
+ 	$(MAKE) -C $(GNUFE_BUILD_SUBDIR)/gcc \
+ 	    install-common
+ 	$(MAKE) -C $(GNUFE_BUILD_SUBDIR)/gcc \
+@@ -402,7 +402,7 @@
+ 	    install-driver
+ 	$(MAKE) -C $(GNUFE_BUILD_SUBDIR)/$(GNUFE_BUILD_HOST)/libstdc++-v3 \
+ 	    install
+-	export TOOLROOT=@prefix@; $(TOP_SRCDIR)/install_compiler.sh ia64-cross $(if $(BUILD_FORTRAN),"YES","NO")
++	export TOOLROOT=$(DESTDIR)@prefix@; $(TOP_SRCDIR)/install_compiler.sh ia64-cross $(if $(BUILD_FORTRAN),"YES","NO")
+ 
+ LIB_ARGS = BUILD_TARGET=$(LIB_BUILD_TARGET) BUILD_COMPILER=SELF BUILD_AREA=$(LIB_BUILD_AREA) MACHINE_TYPE=$(LIB_MACHINE_TYPE) BUILD_ABI=$(LIB_BUILD_ABI) BUILD_ARCH=$(LIB_BUILD_ARCH) BUILD_HOST=$(LIB_BUILD_HOST) BUILD_OPTIMIZE=@BUILD_LIB_OPTIMIZE@ BUILD_BDVER1=@HOST_BDVER1_SUPPORT@
+ ifeq ($(LIB_BUILD_TARGET),IA64)
+--- /tmp/x86_open64-4.5.2.1/install_compiler.sh	2013-08-15 11:19:13.721691649 +0200
++++ /tmp/x86_open64-4.5.2.1/install_compiler.sh	2013-08-15 11:19:27.110341832 +0200
+@@ -286,6 +286,7 @@
+     # best to find the correct path instead of assuming what it is.
+     cc1path=`cd $ROOT && find open64-gcc-4.2.0 -name cc1`
+     if test `echo $cc1path | wc -w` != 1 ; then
++       echo "ROOT=${ROOT}"
+        echo $0: error could not find cc1 in the GCC install directory
+        exit 1
+     fi

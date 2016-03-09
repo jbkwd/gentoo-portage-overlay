@@ -1,0 +1,396 @@
+--- /var/tmp/portage/dev-util/valgrind-9999/work/valgrind-9999/VEX/priv/guest_amd64_toIR.c	2013-07-26 15:34:15.111293552 +0200
++++ /root/valgrind-9999/VEX/priv/guest_amd64_toIR.c	2013-07-26 15:34:07.328489523 +0200
+@@ -368,7 +368,7 @@
+ }
+ 
+ #define DIP(format, args...)           \
+-   if (vex_traceflags & VEX_TRACE_FE)  \
++   if (vex_traceflags & VEX_TRACE_FE)	\
+       vex_printf(format, ## args)
+ 
+ #define DIS(buf, format, args...)      \
+@@ -673,7 +673,7 @@
+ #define PFX_VEXnV1 (1<<19)   /* ~VEX vvvv[1], if VEX present, else 0 */
+ #define PFX_VEXnV2 (1<<20)   /* ~VEX vvvv[2], if VEX present, else 0 */
+ #define PFX_VEXnV3 (1<<21)   /* ~VEX vvvv[3], if VEX present, else 0 */
+-
++#define PFX_VEXW   (1<<22)   /* VEX W bit, (eg. source operand order) */
+ 
+ #define PFX_EMPTY 0x55000000
+ 
+@@ -793,6 +793,10 @@
+    return (pfx & PFX_VEXL) ? 1 : 0;
+ }
+ 
++static Int getVexW ( Prefix pfx ) {
++  return (pfx & PFX_VEXW) ? 1 : 0;
++}
++
+ 
+ /*------------------------------------------------------------*/
+ /*--- For dealing with escapes                             ---*/
+@@ -2467,7 +2471,7 @@
+       case 0x00: case 0x01: case 0x02: case 0x03: 
+       /* ! 04 */ /* ! 05 */ case 0x06: case 0x07:
+          { UChar rm = toUChar(mod_reg_rm & 7);
+-           DIS(buf, "%s(%s)", segRegTxt(pfx), nameIRegRexB(8,pfx,rm));
++       DIS(buf, "%s(%s)", segRegTxt(pfx), nameIRegRexB(8,pfx,rm));
+            *len = 1;
+            return disAMode_copy2tmp(
+                   handleAddrOverrides(vbi, pfx, getIRegRexB(8,pfx,rm)));
+@@ -2634,7 +2638,7 @@
+                       binop(Iop_Add64, getIRegRexB(8,pfx,base_r), mkU64(d)) ));
+          } else {
+             if (scale == 0) {
+-               DIS(buf, "%s%lld(%s,%s)", segRegTxt(pfx), d, 
++	       DIS(buf, "%s%lld(%s,%s)", segRegTxt(pfx), d, 
+                          nameIRegRexB(8,pfx,base_r), 
+                          nameIReg64rexX(pfx,index_r));
+             } else {
+@@ -26496,6 +26500,210 @@
+ }
+ 
+ 
++static Long dis_FMA4 ( VexAbiInfo* vbi, Prefix pfx, Long delta, UChar opc )
++{
++   UChar  modrm   = getUChar(delta);
++   UInt   rG      = gregOfRexRM(pfx, modrm);
++   UInt   rV      = getVexNvvvv(pfx);
++   UInt   rIS4    = 0xFF; /* invalid */
++   Bool   scalar  = False;//(opc & 0xF) > 7 && (opc & 1);
++   IRType ty      = (opc & 1) ? Ity_F64 : Ity_F32;
++   IRType vty     = scalar ? ty : getVexL(pfx) ? Ity_V256 : Ity_V128;
++   IRTemp vX      = newTemp(vty);
++   IRTemp vY      = newTemp(vty);
++   IRTemp vZ      = newTemp(vty);
++   IRExpr *x[8], *y[8], *z[8], *r[8];
++   IRTemp addr    = IRTemp_INVALID;
++   HChar  dis_buf[50];
++   Int    alen    = 0;
++   HChar *name;
++   HChar *suffix;
++   Bool   negateRes   = False;
++   Bool   negateZeven = False;
++   Bool   negateZodd  = False;
++   Int    i, j;
++   Int    count;
++   UInt   oprConf  = getRexW(pfx);
++
++   static IROp ops[] = { Iop_V256to64_0, Iop_V256to64_1,
++                         Iop_V256to64_2, Iop_V256to64_3,
++                         Iop_V128to64,   Iop_V128HIto64 };
++
++   switch (opc & 0xF) {
++   case 0x6:
++      name = "addsub";
++      negateZeven = True;
++      break;
++   case 0x7:
++      name = "subadd";
++      negateZodd = True;
++      break;
++   case 0x8:
++   case 0x9:
++      name = "add";
++      break;
++   case 0xA:
++   case 0xB:
++      name = "sub";
++      negateZeven = True;
++      negateZodd = True;
++      break;
++   case 0xC:
++   case 0xD:
++      name = "add";
++      negateRes = True;
++      negateZeven = True;
++      negateZodd = True;
++      break;
++   case 0xE:
++   case 0xF:
++      name = "sub";
++      negateRes = True;
++      break;
++   default:
++      vpanic("dis_FMA4(amd64)");
++      break;
++   }
++
++   if (scalar)
++      suffix = ty == Ity_F64 ? "sd" : "ss";
++   else
++      suffix = ty == Ity_F64 ? "pd" : "ps";
++
++   if (scalar) {
++      assign( vX, ty == Ity_F64
++                  ? getXMMRegLane64F(rV, 0) : getXMMRegLane32F(rV, 0) );
++   } else {
++      assign( vX, vty == Ity_V256 ? getYMMReg(rV) : getXMMReg(rV) );
++   }
++
++   
++
++   if (epartIsReg(modrm)) {
++      UInt rE = eregOfRexRM(pfx, modrm);
++      delta += 1;
++
++      UChar ib = getUChar(delta);
++      rIS4 = (ib >> 4) & 0xF;
++      delta++;
++
++      if (scalar) {
++	assign( vY, ty == Ity_F64 
++		? getXMMRegLane64F(rE, 0) : getXMMRegLane32F(rE, 0) );
++        assign( vZ, ty == Ity_F64
++                ? getXMMRegLane64F(rIS4, 0) : getXMMRegLane32F(rIS4, 0) );
++      }else{
++         assign( vY, vty == Ity_V256 ? getYMMReg(rE)   : getXMMReg(rE) );
++	 assign( vZ, vty == Ity_V256 ? getYMMReg(rIS4) : getXMMReg(rIS4) );
++      }
++      if (vty == Ity_V256) {
++	DIP("vf%sm%s%s %s,%s,%s,%s (0) [%x,%x]\n", negateRes ? "n" : "",
++             name, suffix, 
++	     oprConf ? nameYMMReg(rE)   : nameYMMReg(rIS4),
++	     oprConf ? nameYMMReg(rIS4) : nameYMMReg(rE),
++	     nameYMMReg(rV), nameYMMReg(rG), oprConf, pfx);
++      } else {
++	DIP("vf%sm%s%s %s,%s,%s,%s (1) [%x,%x]\n", negateRes ? "n" : "",
++             name, suffix, 
++	     oprConf ? nameXMMReg(rE)   : nameXMMReg(rIS4), 
++             oprConf ? nameXMMReg(rIS4) : nameXMMReg(rE),
++	     nameXMMReg(rV), nameXMMReg(rG), oprConf, pfx);
++      }
++   } else {
++      addr = disAMode( &alen, vbi, pfx, delta, dis_buf, 0 );
++      delta += alen;
++      assign(vY, loadLE(vty, mkexpr(addr)));
++
++      UChar ib = getUChar(delta);
++      rIS4 = (ib >> 4) & 0xF;
++      delta++;
++
++      if (scalar) {
++        assign( vZ, ty == Ity_F64
++                ? getXMMRegLane64F(rIS4, 0) : getXMMRegLane32F(rIS4, 0) );
++      }else{
++	assign( vZ, vty == Ity_V256 ? getYMMReg(rIS4) : getXMMReg(rIS4) );
++      } 
++
++      if (vty == Ity_V256) {
++	DIP("vf%sm%s%s %s,%s,%s,%s (2) [%x,%x]\n", negateRes ? "n" : "",
++             name, suffix, 
++	     oprConf ? dis_buf          : nameYMMReg(rIS4),
++	     oprConf ? nameYMMReg(rIS4) : dis_buf,
++	     nameYMMReg(rV), nameYMMReg(rG), oprConf, pfx);
++      } else {
++	DIP("vf%sm%s%s %s,%s,%s,%s (3) [%x,%x]\n", negateRes ? "n" : "",
++             name, suffix, 
++	     oprConf ? dis_buf          : nameXMMReg(rIS4),
++             oprConf ? nameXMMReg(rIS4) : dis_buf,
++	     nameXMMReg(rV), nameXMMReg(rG), oprConf, pfx);
++      }
++   }
++
++   /* exchanage values depending on operand configuration */
++   if(oprConf){
++     IRTemp tem = vY;
++     vY = vZ;
++     vZ = tem;
++   }
++
++   if (scalar) {
++      count = 1;
++      x[0] = mkexpr(vX);
++      y[0] = mkexpr(vY);
++      z[0] = mkexpr(vZ);
++   } else if (ty == Ity_F32) {
++      count = vty == Ity_V256 ? 8 : 4;
++      j = vty == Ity_V256 ? 0 : 4;
++      for (i = 0; i < count; i += 2) {
++         IRTemp tem = newTemp(Ity_I64);
++         assign(tem, unop(ops[i / 2 + j], mkexpr(vX)));
++         x[i] = unop(Iop_64to32, mkexpr(tem));
++         x[i + 1] = unop(Iop_64HIto32, mkexpr(tem));
++         tem = newTemp(Ity_I64);
++         assign(tem, unop(ops[i / 2 + j], mkexpr(vY)));
++         y[i] = unop(Iop_64to32, mkexpr(tem));
++         y[i + 1] = unop(Iop_64HIto32, mkexpr(tem));
++         tem = newTemp(Ity_I64);
++         assign(tem, unop(ops[i / 2 + j], mkexpr(vZ)));
++         z[i] = unop(Iop_64to32, mkexpr(tem));
++         z[i + 1] = unop(Iop_64HIto32, mkexpr(tem));
++      }
++   } else {
++      count = vty == Ity_V256 ? 4 : 2;
++      j = vty == Ity_V256 ? 0 : 4;
++      for (i = 0; i < count; i++) {
++         x[i] = unop(ops[i + j], mkexpr(vX));
++         y[i] = unop(ops[i + j], mkexpr(vY));
++         z[i] = unop(ops[i + j], mkexpr(vZ));
++      }
++   }
++   if (!scalar)
++      for (i = 0; i < count; i++) {
++         IROp op = ty == Ity_F64
++                   ? Iop_ReinterpI64asF64 : Iop_ReinterpI32asF32;
++         x[i] = unop(op, x[i]);
++         y[i] = unop(op, y[i]);
++         z[i] = unop(op, z[i]);
++      }
++   for (i = 0; i < count; i++) {
++      if ((i & 1) ? negateZodd : negateZeven)
++         z[i] = unop(ty == Ity_F64 ? Iop_NegF64 : Iop_NegF32, z[i]);
++      r[i] = IRExpr_Qop(ty == Ity_F64 ? Iop_MAddF64 : Iop_MAddF32,
++                        get_FAKE_roundingmode(), x[i], y[i], z[i]);
++      if (negateRes)
++         r[i] = unop(ty == Ity_F64 ? Iop_NegF64 : Iop_NegF32, r[i]);
++      if (ty == Ity_F64)
++         putYMMRegLane64F( rG, i, r[i] );
++      else
++         putYMMRegLane32F( rG, i, r[i] );
++   }
++   if (vty != Ity_V256)
++      putYMMRegLane128( rG, 1, mkV128(0) );
++
++   return delta;
++}
++
+ static Long dis_FMA ( VexAbiInfo* vbi, Prefix pfx, Long delta, UChar opc )
+ {
+    UChar  modrm   = getUChar(delta);
+@@ -30517,6 +30725,23 @@
+       }
+       break;
+ 
++   case 0x68:
++   case 0x69:
++      /* VFMADDPS xmm4/m128, xmm3, xmm2, xmm1 = VEX.128.66.0F3A.W0 68 /r is4 */
++      /* VFMADDPS ymm4/m256, ymm3, ymm2, ymm1 = VEX.256.66.0F3A.W0 68 /r is4 */
++      /* VFMADDPS xmm4, xmm3/m128, xmm2, xmm1 = VEX.128.66.0F3A.W1 68 /r is4 */
++      /* VFMADDPS ymm4, ymm3/m256, ymm2, ymm1 = VEX.256.66.0F3A.W1 68 /r is4 */
++      /* VFMADDPD xmm4/m128, xmm3, xmm2, xmm1 = VEX.128.66.0F3A.W0 69 /r is4 */
++      /* VFMADDPD ymm4/m256, ymm3, ymm2, ymm1 = VEX.256.66.0F3A.W0 69 /r is4 */
++      /* VFMADDPD xmm4, xmm3/m128, xmm2, xmm1 = VEX.128.66.0F3A.W1 69 /r is4 */
++      /* VFMADDPD ymm4, ymm3/m256, ymm2, ymm1 = VEX.256.66.0F3A.W1 69 /r is4 */
++      if (have66noF2noF3(pfx)) {
++         delta = dis_FMA4( vbi, pfx, delta, opc );
++         *uses_vvvv = True;
++         goto decode_success;
++      }
++      break;
++
+    case 0xDF:
+       /* VAESKEYGENASSIST imm8, xmm2/m128, xmm1 = VEX.128.66.0F3A.WIG DF /r */
+       if (have66noF2noF3(pfx) && 0==getVexL(pfx)/*128*/) {
+@@ -31159,8 +31384,8 @@
+       vex_printf("vex amd64->IR:   REX=%d REX.W=%d REX.R=%d REX.X=%d REX.B=%d\n",
+                  haveREX(pfx) ? 1 : 0, getRexW(pfx), getRexR(pfx),
+                  getRexX(pfx), getRexB(pfx));
+-      vex_printf("vex amd64->IR:   VEX=%d VEX.L=%d VEX.nVVVV=0x%x ESC=%s\n",
+-                 haveVEX(pfx) ? 1 : 0, getVexL(pfx),
++      vex_printf("vex amd64->IR:   VEX=%d VEX.L=%d VEX.W=%d VEX.nVVVV=0x%x ESC=%s\n",
++                 haveVEX(pfx) ? 1 : 0, getVexL(pfx),getVexW(pfx),
+                  getVexNvvvv(pfx),
+                  esc==ESC_NONE ? "NONE" :
+                    esc==ESC_0F ? "0F" :
+--- /var/tmp/portage/dev-util/valgrind-9999/work/valgrind-9999/VEX/priv/main_main.c	2013-07-29 16:03:00.965601286 +0200
++++ /root/valgrind-9999/VEX/priv/main_main.c	2013-07-29 16:02:43.766030832 +0200
+@@ -902,6 +902,7 @@
+          vex_printf("\n\n");
+       }
+       if (UNLIKELY(out_used + j > vta->host_bytes_size)) {
++	vex_printf("VexTransOutputFull %d + %d > %d\n", out_used, j, vta->host_bytes_size);
+          vexSetAllocModeTEMP_and_clear();
+          vex_traceflags = 0;
+          res.status = VexTransOutputFull;
+@@ -1418,45 +1419,8 @@
+ 
+ static const HChar* show_hwcaps_mips32 ( UInt hwcaps )
+ {
+-   /* MIPS baseline. */
+-   if (hwcaps && VEX_PRID_COMP_MIPS == VEX_PRID_COMP_MIPS) {
+-      /* MIPS baseline with dspr2. */
+-      if (hwcaps && VEX_MIPS_ASE_DSP2P == VEX_MIPS_ASE_DSP2P) {
+-         return "MIPS-baseline-dspr2";
+-      }
+-      /* MIPS baseline with dsp. */
+-      if (hwcaps && VEX_MIPS_ASE_DSP == VEX_MIPS_ASE_DSP) {
+-         return "MIPS-baseline-dsp";
+-      }
+-      return "MIPS-baseline";
+-   }
+-
+-   /* Broadcom baseline. */
+-   if (hwcaps && VEX_PRID_COMP_BROADCOM == VEX_PRID_COMP_BROADCOM) {
+-      /* Broadcom baseline with dspr2. */
+-      if (hwcaps && VEX_MIPS_ASE_DSP2P == VEX_MIPS_ASE_DSP2P) {
+-         return "Broadcom-baseline-dspr2";
+-      }
+-      /* Broadcom baseline with dsp. */
+-      if (hwcaps && VEX_MIPS_ASE_DSP == VEX_MIPS_ASE_DSP) {
+-         return "Broadcom-baseline-dsp";
+-      }
+-      return "Broadcom-baseline";
+-   }
+-
+-   /* Netlogic baseline. */
+-   if (hwcaps && VEX_PRID_COMP_NETLOGIC == VEX_PRID_COMP_NETLOGIC) {
+-      /* Netlogic baseline with dspr2. */
+-      if (hwcaps && VEX_MIPS_ASE_DSP2P == VEX_MIPS_ASE_DSP2P) {
+-         return "Netlogic-baseline-dspr2";
+-      }
+-      /* Netlogic baseline with dsp. */
+-      if (hwcaps && VEX_MIPS_ASE_DSP == VEX_MIPS_ASE_DSP) {
+-         return "Netlogic-baseline-dsp";
+-      }
+-      return "Netlogic-baseline";
+-   }
+-
++   if (hwcaps == 0x00010000) return "MIPS-baseline";
++   if (hwcaps == 0x00020000) return "Broadcom-baseline";
+    return NULL;
+ }
+ 
+--- /var/tmp/portage/dev-util/valgrind-9999/work/valgrind-9999/coregrind/m_translate.c	2013-07-29 16:40:24.207805472 +0200
++++ /root/valgrind-9999/coregrind/m_translate.c	2013-07-29 16:39:38.607935752 +0200
+@@ -717,7 +717,7 @@
+    wherever we like. */
+ /* 60000: should agree with assertion in VG_(add_to_transtab) in
+    m_transtab.c. */
+-#define N_TMPBUF 60000
++#define N_TMPBUF 1024*128
+ static UChar tmpbuf[N_TMPBUF];
+ 
+ 
+@@ -1601,6 +1601,9 @@
+    /* Sheesh.  Finally, actually _do_ the translation! */
+    tres = LibVEX_Translate ( &vta );
+ 
++   if(tres.status!=VexTransOK)
++     VG_(printf)("Assertion will fail... (%s)\n",(tres.status==VexTransAccessFail)?"VexTransAccessFail":((tres.status==VexTransOutputFull)?"VexTransOutputFull":"Unknown"));
++   
+    vg_assert(tres.status == VexTransOK);
+    vg_assert(tres.n_sc_extents >= 0 && tres.n_sc_extents <= 3);
+    vg_assert(tmpbuf_used <= N_TMPBUF);
+--- /var/tmp/portage/dev-util/valgrind-9999/work/valgrind-9999/coregrind/m_transtab.c	2013-07-29 16:40:24.209805422 +0200
++++ /root/valgrind-9999/coregrind/m_transtab.c	2013-07-29 16:40:09.896160719 +0200
+@@ -1519,7 +1519,7 @@
+    vg_assert(vge->n_used >= 1 && vge->n_used <= 3);
+ 
+    /* 60000: should agree with N_TMPBUF in m_translate.c. */
+-   vg_assert(code_len > 0 && code_len < 60000);
++   vg_assert(code_len > 0 && code_len < (1024*128));
+ 
+    /* Generally stay sane */
+    vg_assert(n_guest_instrs < 200); /* it can be zero, tho */
+--- /var/tmp/portage/dev-util/valgrind-9999/work/valgrind-9999/coregrind/m_translate.c	2013-07-29 16:49:58.942395669 +0200
++++ /root/valgrind-9999/coregrind/m_translate.c	2013-07-29 16:50:53.539008844 +0200
+@@ -1626,7 +1626,7 @@
+    }
+ 
+    /* Copy data at trans_addr into the translation cache. */
+-   vg_assert(tmpbuf_used > 0 && tmpbuf_used < 65536);
++   vg_assert(tmpbuf_used > 0 && tmpbuf_used < (128*1024));
+ 
+    // If debugging, don't do anything with the translated block;  we
+    // only did this for the debugging output produced along the way.
