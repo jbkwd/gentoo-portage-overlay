@@ -1,0 +1,56 @@
+diff -urP andor.orig/src/driver/drvmain.c andor/src/driver/drvmain.c
+--- andor.orig/src/driver/drvmain.c	2011-02-18 16:31:29.000000000 +0100
++++ andor/src/driver/drvmain.c	2011-02-18 16:32:00.000000000 +0100
+@@ -65,7 +65,8 @@
+ };
+ 
+ struct file_operations andor_fops = {
+-   ioctl: andor_ioctl,
++   unlocked_ioctl: andor_ioctl,
++   compat_ioctl: andor_ioctl,
+    mmap: andor_mmap,
+    open: andor_open,
+    release: andor_release,
+diff -urP andor.orig/src/driver/ioctl.c andor/src/driver/ioctl.c
+--- andor.orig/src/driver/ioctl.c	2011-02-18 16:31:29.000000000 +0100
++++ andor/src/driver/ioctl.c	2011-02-18 16:32:00.000000000 +0100
+@@ -31,7 +31,7 @@
+ #include "andor.h"
+ #include "pld.h"
+ 
+-int andor_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long ulArg)
++int andor_ioctl(struct file *filp, unsigned int cmd, unsigned long ulArg)
+ {
+   int iCardNo;
+   unsigned char* pucConfig;
+@@ -46,7 +46,7 @@
+ 
+   pucConfig = kmalloc(256*sizeof(unsigned char), GFP_KERNEL);
+ 
+-  iCardNo = MINOR(inode->i_rdev);
++  iCardNo = MINOR(filp->f_mapping->host->i_rdev);
+ 
+   switch(cmd)
+   {
+@@ -231,7 +231,7 @@
+     iErr = AndorGetIRQ(iCardNo, ulArg, ulAndorData1);
+     break;
+   case ANDOR_IOC_HARD_RESET:
+-    iErr = andor_release(inode, filp);
++    iErr = andor_release(filp->f_mapping->host, filp);
+     break;
+   default:
+     iErr = -EINVAL;
+diff -urP andor.orig/src/driver/main.h andor/src/driver/main.h
+--- andor.orig/src/driver/main.h	2011-02-18 16:34:24.000000000 +0100
++++ andor/src/driver/main.h	2011-02-18 16:35:49.000000000 +0100
+@@ -143,8 +143,7 @@
+ 
+ int andor_open(struct inode *inode, struct file *filp);
+ int andor_release(struct inode *inode, struct file *filp);
+-int andor_ioctl(struct inode *inode, struct file *filp,
+-              unsigned int cmd, unsigned long arg);
++int andor_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+ int andor_fasync(int fd, struct file *filp, int mode);
+ int andor_mmap(struct file *file, struct vm_area_struct *vma);
+ int init_device(struct pci_dev* pciDev, int iCardNo);

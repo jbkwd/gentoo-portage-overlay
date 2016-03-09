@@ -1,0 +1,38 @@
+--- Makefile.orig	2010-06-15 17:44:45.000000000 +0200
++++ Makefile	2010-06-15 18:10:44.000000000 +0200
+@@ -6,7 +6,7 @@
+ CC=gcc
+ CONFIGFLAGS=#-ULINSOLVERS_RETAIN_MEMORY
+ #ARCHFLAGS=-march=pentium4 # YOU MIGHT WANT TO UNCOMMENT THIS FOR P4
+-CFLAGS=$(CONFIGFLAGS) $(ARCHFLAGS) -O3 -funroll-loops -Wall #-ffast-math #-pg
++CFLAGS=$(CONFIGFLAGS) $(ARCHFLAGS) -O3 -funroll-loops -Wall -fPIC #-ffast-math #-pg
+ LAPACKLIBS_PATH=/usr/local/lib # WHEN USING LAPACK, CHANGE THIS TO WHERE YOUR COMPILED LIBS ARE!
+ LDFLAGS=-L$(LAPACKLIBS_PATH) -L.
+ LIBOBJS=lm.o Axb.o misc.o lmlec.o lmbc.o lmblec.o lmbleic.o
+@@ -30,13 +30,12 @@
+ 
+ LIBS=$(LAPACKLIBS)
+ 
+-all: liblevmar.a lmdemo
++all: liblevmar.so lmdemo
+ 
+-liblevmar.a: $(LIBOBJS)
+-	$(AR) crv liblevmar.a $(LIBOBJS)
+-	$(RANLIB) liblevmar.a
++liblevmar.so: $(LIBOBJS)
++	$(CC) -shared -Wl,-soname,liblevmar.so -o liblevmar.so $(LIBOBJS) $(LIBS)
+ 
+-lmdemo: $(DEMOBJS) liblevmar.a
++lmdemo: $(DEMOBJS) liblevmar.so
+ 	$(CC) $(LDFLAGS) $(DEMOBJS) -o lmdemo -llevmar $(LIBS) -lm
+ 
+ lm.o: lm.c lm_core.c levmar.h misc.h compiler.h
+@@ -54,7 +53,7 @@
+ 
+ cleanall: clean
+ 	@rm -f lmdemo
+-	@rm -f liblevmar.a
++	@rm -f liblevmar.so
+ 
+ depend:
+ 	makedepend -f Makefile $(LIBSRCS) $(DEMOSRCS)

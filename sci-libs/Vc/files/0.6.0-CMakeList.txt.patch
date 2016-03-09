@@ -1,0 +1,10 @@
+--- CMakeLists.txt.orig	2012-01-27 14:38:56.000000000 +0100
++++ CMakeLists.txt	2012-01-27 14:39:31.000000000 +0100
+@@ -283,6 +283,7 @@
+    cmake/AddCompilerFlag.cmake
+    cmake/MacroEnsureVersion.cmake
+    cmake/CheckCCompilerFlag.cmake
++   cmake/AddTargetProperty.cmake
+    DESTINATION share/Vc/cmake/
+    )
+ 

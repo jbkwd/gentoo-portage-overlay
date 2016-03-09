@@ -1,0 +1,21 @@
+diff -urP qemu-kvm-0.13.0.orig/hw/device-assignment.c qemu-kvm-0.13.0/hw/device-assignment.c
+--- qemu-kvm-0.13.0.orig/hw/device-assignment.c	2011-01-30 11:20:52.000000000 +0100
++++ qemu-kvm-0.13.0/hw/device-assignment.c	2011-01-30 11:21:58.000000000 +0100
+@@ -47,7 +47,7 @@
+ #define IORESOURCE_DMA      0x00000800
+ #define IORESOURCE_PREFETCH 0x00001000  /* No side effects */
+ 
+-/* #define DEVICE_ASSIGNMENT_DEBUG 1 */
++#define DEVICE_ASSIGNMENT_DEBUG 1
+ 
+ #ifdef DEVICE_ASSIGNMENT_DEBUG
+ #define DEBUG(fmt, ...)                                       \
+@@ -519,7 +519,7 @@
+ 
+         /* handle memory io regions */
+         if (cur_region->type & IORESOURCE_MEM) {
+-            int slow_map = 0;
++            int slow_map = 1;
+             int t = cur_region->type & IORESOURCE_PREFETCH
+                 ? PCI_BASE_ADDRESS_MEM_PREFETCH
+                 : PCI_BASE_ADDRESS_SPACE_MEMORY;

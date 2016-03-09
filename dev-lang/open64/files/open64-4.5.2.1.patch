@@ -1,0 +1,20 @@
+--- /tmp/x86_open64-4.5.2.1/osprey/be/opt/opt_emit.cxx	2013-02-19 07:42:24.000000000 +0100
++++ /tmp/x86_open64-4.5.2.1.new/x86_open64-4.5.2.1/osprey/be/opt/opt_emit.cxx	2013-08-09 16:59:45.000000000 +0200
+@@ -78,6 +78,7 @@
+ 
+ #include <stdint.h>
+ #include <sys/times.h>
++#include <unistd.h>
+ #include "defs.h"
+ #include "tracing.h"
+ #include "erglob.h"
+--- /tmp/x86_open64-4.5.2.1/osprey/ipa/local/Makefile.gbase	2013-02-19 07:42:30.000000000 +0100
++++ /tmp/x86_open64-4.5.2.1.new/x86_open64-4.5.2.1/osprey/ipa/local/Makefile.gbase	2013-08-09 17:14:25.000000000 +0200
+@@ -338,4 +338,6 @@
+ #----------------------------------------------------------------------
+ #  Temporary workaround
+ #----------------------------------------------------------------------
++ifeq ($(BUILD_COMPILER), OPEN64)
+ ipl_summarize_util.o: OPTIMIZER += -CG:all_sched=0
++endif
+\ No newline at end of file

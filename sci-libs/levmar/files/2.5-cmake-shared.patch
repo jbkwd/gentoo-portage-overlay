@@ -1,0 +1,29 @@
+--- CMakeLists.txt.orig	2010-05-28 10:55:27.000000000 +0200
++++ CMakeLists.txt	2010-06-15 17:13:34.000000000 +0200
+@@ -2,11 +2,16 @@
+ #                        http://www.insightsoftwareconsortium.org/wiki/index.php/CMake_Tutorial
+ 
+ PROJECT(LEVMAR)
+-#CMAKE_MINIMUM_REQUIRED(VERSION 1.4)
++CMAKE_MINIMUM_REQUIRED(VERSION 1.4)
++
++if(COMMAND cmake_policy)
++  cmake_policy(SET CMP0003 NEW)
++endif(COMMAND cmake_policy)
+ 
+ # compiler flags
+ #ADD_DEFINITIONS(-DLINSOLVERS_RETAIN_MEMORY) # do not free memory between linear solvers calls
+ #REMOVE_DEFINITIONS(-DLINSOLVERS_RETAIN_MEMORY) # free memory between calls
++SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") # build shared library
+ 
+ # f2c is sometimes equivalent to libF77 & libI77; in that case, set HAVE_F2C to 0
+ SET(HAVE_F2C 1 CACHE BOOL "Do we have f2c or F77/I77?" )
+@@ -30,7 +35,7 @@
+ #INCLUDE_DIRECTORIES(/usr/include)
+ 
+ # levmar library source files
+-ADD_LIBRARY(levmar STATIC
++ADD_LIBRARY(levmar SHARED
+   lm.c Axb.c misc.c lmlec.c lmbc.c lmblec.c lmbleic.c
+   levmar.h misc.h compiler.h
+ )

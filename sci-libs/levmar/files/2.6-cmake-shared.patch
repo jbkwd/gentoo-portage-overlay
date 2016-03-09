@@ -1,0 +1,11 @@
+--- CMakeLists.txt.orig	2011-11-29 22:36:19.000000000 +0100
++++ CMakeLists.txt	2012-04-27 14:44:34.000000000 +0200
+@@ -60,7 +60,7 @@
+ ENDIF(HAVE_PLASMA)
+ 
+ # levmar library source files
+-ADD_LIBRARY(levmar STATIC
++ADD_LIBRARY(levmar SHARED
+   lm.c Axb.c misc.c lmlec.c lmbc.c lmblec.c lmbleic.c
+   levmar.h misc.h compiler.h
+ )

@@ -1,0 +1,384 @@
+diff --git a/avx/vector.h b/avx/vector.h
+index e271362..2240440 100644
+--- a/avx/vector.h
++++ b/avx/vector.h
+@@ -297,6 +297,19 @@ template<typename T> class Vector
+         Vc_ALWAYS_INLINE void fusedMultiplyAdd(const Vector<T> &factor, const Vector<T> &summand) {
+             VectorHelper<T>::fma(data(), factor.data(), summand.data());
+         }
++        
++        //naming scheme adapted from https://en.wikipedia.org/wiki/FMA4_instruction_set
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd123(const Vector<T> &v1, const Vector<T> &v2) {
++            VectorHelper<T>::fma4(data(), data(), v1.data(), v2.data());
++        }
++        
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd213(const Vector<T> &v1, const Vector<T> &v2) {
++            VectorHelper<T>::fma4(data(), v1.data(), data(), v2.data());
++        }
++
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd231(const Vector<T> &v1, const Vector<T> &v2) {
++            VectorHelper<T>::fma4(data(), v1.data(), v2.data(), data());
++        }
+ 
+         Vc_ALWAYS_INLINE void assign( const Vector<T> &v, const Mask &mask ) {
+             const VectorType k = avx_cast<VectorType>(mask.data());
+diff --git a/avx/vectorhelper.h b/avx/vectorhelper.h
+index 22f2720..b8adda8 100644
+--- a/avx/vectorhelper.h
++++ b/avx/vectorhelper.h
+@@ -225,29 +225,33 @@ namespace AVX
+             static Vc_ALWAYS_INLINE VectorType zero() { return CAT(_mm256_setzero_, SUFFIX)(); }
+             static Vc_ALWAYS_INLINE VectorType one()  { return CAT(_mm256_setone_, SUFFIX)(); }// set(1.); }
+ 
+-            static inline void fma(VectorType &v1, VTArg v2, VTArg v3) {
++            static inline void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) {
+ #ifdef VC_IMPL_FMA4
+-                v1 = _mm256_macc_pd(v1, v2, v3);
++                v1 = _mm256_macc_pd(v2, v3, v4);
+ #else
+-                VectorType h1 = _mm256_and_pd(v1, _mm256_broadcast_sd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
+                 VectorType h2 = _mm256_and_pd(v2, _mm256_broadcast_sd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
++                VectorType h3 = _mm256_and_pd(v3, _mm256_broadcast_sd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
+ #if defined(VC_GCC) && VC_GCC < 0x40703
+                 // GCC before 4.7.3 uses an incorrect optimization where it replaces the subtraction with an andnot
+                 // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54703
+-                asm("":"+x"(h1), "+x"(h2));
++                asm("":"+x"(h2), "+x"(h3));
+ #endif
+-                const VectorType l1 = _mm256_sub_pd(v1, h1);
+                 const VectorType l2 = _mm256_sub_pd(v2, h2);
+-                const VectorType ll = mul(l1, l2);
+-                const VectorType lh = add(mul(l1, h2), mul(h1, l2));
+-                const VectorType hh = mul(h1, h2);
++                const VectorType l3 = _mm256_sub_pd(v3, h3);
++                const VectorType ll = mul(l2, l3);
++                const VectorType lh = add(mul(l2, h3), mul(h2, l3));
++                const VectorType hh = mul(h2, h3);
+                 // ll < lh < hh for all entries is certain
+-                const VectorType lh_lt_v3 = cmplt(abs(lh), abs(v3)); // |lh| < |v3|
+-                const VectorType b = _mm256_blendv_pd(v3, lh, lh_lt_v3);
+-                const VectorType c = _mm256_blendv_pd(lh, v3, lh_lt_v3);
++                const VectorType lh_lt_v4 = cmplt(abs(lh), abs(v4)); // |lh| < |v4|
++                const VectorType b = _mm256_blendv_pd(v4, lh, lh_lt_v4);
++                const VectorType c = _mm256_blendv_pd(lh, v4, lh_lt_v4);
+                 v1 = add(add(ll, b), add(c, hh));
+ #endif
+             }
++            
++            static inline void fma(VectorType &v1, VTArg v2, VTArg v3) {
++							fma4(v1,v1,v2,v3);
++						}
+ 
+             OP(add) OP(sub) OP(mul)
+             OPcmp(eq) OPcmp(neq)
+@@ -318,21 +322,26 @@ namespace AVX
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType one()  { return CAT(_mm256_setone_, SUFFIX)(); }// set(1.f); }
+             static Vc_ALWAYS_INLINE Vc_CONST m256 concat(param256d a, param256d b) { return _mm256_insertf128_ps(avx_cast<m256>(_mm256_cvtpd_ps(a)), _mm256_cvtpd_ps(b), 1); }
+ 
+-            static inline void fma(VectorType &v1, VTArg v2, VTArg v3) {
++            static inline void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) {
+ #ifdef VC_IMPL_FMA4
+-                v1 = _mm256_macc_ps(v1, v2, v3);
++                v1 = _mm256_macc_ps(v2, v3, v4);
+ #else
+-                m256d v1_0 = _mm256_cvtps_pd(lo128(v1));
+-                m256d v1_1 = _mm256_cvtps_pd(hi128(v1));
+                 m256d v2_0 = _mm256_cvtps_pd(lo128(v2));
+                 m256d v2_1 = _mm256_cvtps_pd(hi128(v2));
+                 m256d v3_0 = _mm256_cvtps_pd(lo128(v3));
+                 m256d v3_1 = _mm256_cvtps_pd(hi128(v3));
++                m256d v4_0 = _mm256_cvtps_pd(lo128(v4));
++                m256d v4_1 = _mm256_cvtps_pd(hi128(v4));
+                 v1 = AVX::concat(
+-                        _mm256_cvtpd_ps(_mm256_add_pd(_mm256_mul_pd(v1_0, v2_0), v3_0)),
+-                        _mm256_cvtpd_ps(_mm256_add_pd(_mm256_mul_pd(v1_1, v2_1), v3_1)));
++                        _mm256_cvtpd_ps(_mm256_add_pd(_mm256_mul_pd(v2_0, v3_0), v4_0)),
++                        _mm256_cvtpd_ps(_mm256_add_pd(_mm256_mul_pd(v2_1, v3_1), v4_1)));
+ #endif
+             }
++            
++            static inline void fma(VectorType &v1, VTArg v2, VTArg v3) {
++							fma4(v1,v1,v2,v3);
++						}
++
+ 
+             OP(add) OP(sub) OP(mul)
+             OPcmp(eq) OPcmp(neq)
+@@ -409,7 +418,20 @@ namespace AVX
+                     const int e, const int f, const int g, const int h) {
+                 return CAT(_mm256_set_, SUFFIX)(a, b, c, d, e, f, g, h); }
+ 
+-            static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) { v1 = add(mul(v1, v2), v3); }
++            static Vc_INTRINSIC void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) { 
++#ifdef VC_IMPL_FMA4
++							m128i lo = _mm_macc_epi32(lo128(v2),lo128(v3),lo128(v4));
++							m128i hi = _mm_macc_epi32(hi128(v2),hi128(v3),hi128(v4));
++              v1 = AVX::concat(lo,hi);
++#else
++							v1 = add(mul(v2, v3), v4); 
++#endif
++						}
++						
++            static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) { 
++							fma4(v1,v1,v2,v3);
++						}
++
+ 
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType shiftLeft(VTArg a, int shift) {
+                 return CAT(_mm256_slli_, SUFFIX)(a, shift);
+@@ -504,7 +526,15 @@ namespace AVX
+             }
+ 
+             static Vc_INTRINSIC VectorType Vc_CONST mul(VTArg a, VTArg b) { return _mm256_mullo_epi32(a, b); }
+-            static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) { v1 = add(mul(v1, v2), v3); }
++            
++            static Vc_INTRINSIC void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) { 
++							v1 = add(mul(v2, v3), v4); 
++						}
++						
++						static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) { 
++							fma4(v1,v1,v2,v3);
++						}
++
+ 
+ #undef SUFFIX
+ #define SUFFIX epi32
+@@ -573,9 +603,20 @@ namespace AVX
+                 return CAT(_mm_set_, SUFFIX)(a, b, c, d, e, f, g, h);
+             }
+ 
+-            static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) {
+-                v1 = add(mul(v1, v2), v3);
++            static Vc_INTRINSIC void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) {
++#ifdef VC_IMPL_FMA4
++//								m128i lo = _mm_macc_epi16(lo128(v2),lo128(v3),lo128(v4));
++//								m128i hi = _mm_macc_epi16(hi128(v2),hi128(v3),hi128(v4));
++//                v1 = AVX::concat(lo,hi);
++								v1 = _mm_macc_epi16(v2, v3, v4);
++#else
++                v1 = add(mul(v2, v3), v4);
++#endif
+             }
++            
++            static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) {
++								fma4(v1,v1,v2,v3);
++						}
+ 
+             static Vc_INTRINSIC VectorType Vc_CONST abs(VTArg a) { return _mm_abs_epi16(a); }
+             static Vc_INTRINSIC VectorType Vc_CONST mul(VTArg a, VTArg b) { return _mm_mullo_epi16(a, b); }
+@@ -684,7 +725,17 @@ namespace AVX
+                     const EntryType g, const EntryType h) {
+                 return CAT(_mm_set_, SUFFIX)(a, b, c, d, e, f, g, h);
+             }
+-            static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) { v1 = add(mul(v1, v2), v3); }
++            static Vc_INTRINSIC void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) { 
++#ifdef VC_IMPL_FMA4
++                v1 = _mm_macc_epi16(v2, v3, v4);
++#else
++                v1 = add(mul(v2, v3), v4); 
++#endif
++            }
++            
++            static Vc_INTRINSIC void fma(VectorType &v1, VTArg v2, VTArg v3) { 
++                fma4(v1, v1, v2, v3); 
++            }
+ 
+             static Vc_INTRINSIC VectorType Vc_CONST add(VTArg a, VTArg b) { return _mm_add_epi16(a, b); }
+             static Vc_INTRINSIC VectorType Vc_CONST sub(VTArg a, VTArg b) { return _mm_sub_epi16(a, b); }
+diff --git a/scalar/vector.h b/scalar/vector.h
+index 9b64fc8..b57819a 100644
+--- a/scalar/vector.h
++++ b/scalar/vector.h
+@@ -234,6 +234,19 @@ class Vector
+         Vc_ALWAYS_INLINE void fusedMultiplyAdd(const Vector<T> &factor, const Vector<T> &summand) {
+             m_data = m_data * factor.data() + summand.data();
+         }
++        
++        //naming scheme adapted from https://en.wikipedia.org/wiki/FMA4_instruction_set
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd123(const Vector<T> &v1, const Vector<T> &v2) {
++            m_data = m_data * v1.data() + v2.data();
++        }
++        
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd213(const Vector<T> &v1, const Vector<T> &v2) {
++            m_data = v1.data() * m_data + v2.data();
++        }
++
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd231(const Vector<T> &v1, const Vector<T> &v2) {
++            m_data = v1.data() * v2.data() + m_data;
++        }
+ 
+         Vc_ALWAYS_INLINE void assign(const Vector<T> &v, const Mask &m) {
+           if (m.data()) m_data = v.m_data;
+diff --git a/sse/vector.h b/sse/vector.h
+index a857a3c..6eb16df 100644
+--- a/sse/vector.h
++++ b/sse/vector.h
+@@ -358,6 +358,19 @@ template<typename T> class Vector
+         Vc_ALWAYS_INLINE void fusedMultiplyAdd(const Vector<T> &factor, const Vector<T> &summand) {
+             VectorHelper<T>::fma(data(), factor.data(), summand.data());
+         }
++        
++        //naming scheme adapted from https://en.wikipedia.org/wiki/FMA4_instruction_set
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd123(const Vector<T> &v1, const Vector<T> &v2) {
++            VectorHelper<T>::fma4(data(), data(), v1.data(), v2.data());
++        }
++        
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd213(const Vector<T> &v1, const Vector<T> &v2) {
++            VectorHelper<T>::fma4(data(), v1.data(), data(), v2.data());
++        }
++
++        Vc_ALWAYS_INLINE void fusedMultiplyAdd231(const Vector<T> &v1, const Vector<T> &v2) {
++            VectorHelper<T>::fma4(data(), v1.data(), v2.data(), data());
++        }
+ 
+         Vc_ALWAYS_INLINE void assign( const Vector<T> &v, const Mask &mask ) {
+             const VectorType k = mm128_reinterpret_cast<VectorType>(mask.data());
+diff --git a/sse/vectorhelper.h b/sse/vectorhelper.h
+index 4b71597..14ff168 100644
+--- a/sse/vectorhelper.h
++++ b/sse/vectorhelper.h
+@@ -182,31 +182,35 @@ namespace SSE
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType one()  { return CAT(_mm_setone_, SUFFIX)(); }// set(1.); }
+ 
+ #ifdef VC_IMPL_FMA4
+-            static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
+-                v1 = _mm_macc_pd(v1, v2, v3);
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
++                v1 = _mm_macc_pd(v2, v3, v4);
+             }
+ #else
+-            static inline void fma(VectorType &v1, VectorType v2, VectorType v3) {
+-                VectorType h1 = _mm_and_pd(v1, _mm_load_pd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
++            static inline void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
+                 VectorType h2 = _mm_and_pd(v2, _mm_load_pd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
++                VectorType h3 = _mm_and_pd(v3, _mm_load_pd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
+ #if defined(VC_GCC) && VC_GCC < 0x40703
+                 // GCC before 4.7.3 uses an incorrect optimization where it replaces the subtraction with an andnot
+                 // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54703
+-                asm("":"+x"(h1), "+x"(h2));
++                asm("":"+x"(h2), "+x"(h3));
+ #endif
+-                const VectorType l1 = _mm_sub_pd(v1, h1);
+                 const VectorType l2 = _mm_sub_pd(v2, h2);
+-                const VectorType ll = mul(l1, l2);
+-                const VectorType lh = add(mul(l1, h2), mul(h1, l2));
+-                const VectorType hh = mul(h1, h2);
++                const VectorType l3 = _mm_sub_pd(v3, h3);
++                const VectorType ll = mul(l2, l3);
++                const VectorType lh = add(mul(l2, h3), mul(h2, l3));
++                const VectorType hh = mul(h2, h3);
+                 // ll < lh < hh for all entries is certain
+-                const VectorType lh_lt_v3 = cmplt(abs(lh), abs(v3)); // |lh| < |v3|
+-                const VectorType b = _mm_blendv_pd(v3, lh, lh_lt_v3);
+-                const VectorType c = _mm_blendv_pd(lh, v3, lh_lt_v3);
++                const VectorType lh_lt_v4 = cmplt(abs(lh), abs(v4)); // |lh| < |v4|
++                const VectorType b = _mm_blendv_pd(v4, lh, lh_lt_v4);
++                const VectorType c = _mm_blendv_pd(lh, v4, lh_lt_v4);
+                 v1 = add(add(ll, b), add(c, hh));
+             }
+ #endif
+ 
++						static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
++                fma4(v1, v1, v2, v3);
++            }
++
+             OP(add) OP(sub) OP(mul)
+             OPcmp(eq) OPcmp(neq)
+             OPcmp(lt) OPcmp(nlt)
+@@ -271,23 +275,27 @@ namespace SSE
+             static Vc_ALWAYS_INLINE Vc_CONST _M128 concat(_M128D a, _M128D b) { return _mm_movelh_ps(_mm_cvtpd_ps(a), _mm_cvtpd_ps(b)); }
+ 
+ #ifdef VC_IMPL_FMA4
+-            static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
+-                v1 = _mm_macc_ps(v1, v2, v3);
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
++                v1 = _mm_macc_ps(v2, v3, v4);
+             }
+ #else
+-            static inline void fma(VectorType &v1, VectorType v2, VectorType v3) {
+-                __m128d v1_0 = _mm_cvtps_pd(v1);
+-                __m128d v1_1 = _mm_cvtps_pd(_mm_movehl_ps(v1, v1));
++            static inline void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
+                 __m128d v2_0 = _mm_cvtps_pd(v2);
+                 __m128d v2_1 = _mm_cvtps_pd(_mm_movehl_ps(v2, v2));
+                 __m128d v3_0 = _mm_cvtps_pd(v3);
+                 __m128d v3_1 = _mm_cvtps_pd(_mm_movehl_ps(v3, v3));
++                __m128d v4_0 = _mm_cvtps_pd(v4);
++                __m128d v4_1 = _mm_cvtps_pd(_mm_movehl_ps(v4, v4));
+                 v1 = _mm_movelh_ps(
+-                        _mm_cvtpd_ps(_mm_add_pd(_mm_mul_pd(v1_0, v2_0), v3_0)),
+-                        _mm_cvtpd_ps(_mm_add_pd(_mm_mul_pd(v1_1, v2_1), v3_1)));
++                        _mm_cvtpd_ps(_mm_add_pd(_mm_mul_pd(v2_0, v3_0), v4_0)),
++                        _mm_cvtpd_ps(_mm_add_pd(_mm_mul_pd(v2_1, v3_1), v4_1)));
+             }
+ #endif
+ 
++						static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
++                fma4(v1, v1, v2, v3);
++            }
++
+             OP(add) OP(sub) OP(mul)
+             OPcmp(eq) OPcmp(neq)
+             OPcmp(lt) OPcmp(nlt)
+@@ -431,8 +439,14 @@ namespace SSE
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType set(const int a) { return CAT(_mm_set1_, SUFFIX)(a); }
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType set(const int a, const int b, const int c, const int d) { return CAT(_mm_set_, SUFFIX)(a, b, c, d); }
+ 
+-            static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) { v1 = add(mul(v1, v2), v3); }
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) { 
++							v1 = add(mul(v2, v3), v4); 
++						}
+ 
++						static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) { 
++							fma4(v1,v1,v2,v3); 
++						}
++            
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType shiftLeft(VectorType a, int shift) {
+                 return CAT(_mm_slli_, SUFFIX)(a, shift);
+             }
+@@ -526,7 +540,13 @@ namespace SSE
+                 return _mm_cvtsi128_si32(a);
+             }
+ 
+-            static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) { v1 = add(mul(v1, v2), v3); }
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
++							v1 = add(mul(v2, v3), v4); 
++						}
++            
++            static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) { 
++							fma4(v1,v1,v2,v3); 
++						}
+ 
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType mul(const VectorType a, const VectorType b) {
+                 return VectorHelper<int>::mul(a, b);
+@@ -612,8 +632,13 @@ namespace SSE
+                 return CAT(_mm_set_, SUFFIX)(a, b, c, d, e, f, g, h);
+             }
+ 
+-            static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
+-                v1 = add(mul(v1, v2), v3); }
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
++                 v1 = add(mul(v2, v3), v4); 
++						}
++
++						static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
++                fma4(v1,v1,v2,v3);
++						}
+ 
+             OP1(abs)
+ 
+@@ -708,7 +733,13 @@ namespace SSE
+                 return CAT(_mm_srli_, SUFFIX)(a, shift);
+             }
+ 
+-            static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) { v1 = add(mul(v1, v2), v3); }
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) { 
++							v1 = add(mul(v2, v3), v4); 
++						}
++
++						static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) { 
++							fma4(v1,v1,v2,v3);
++						}
+ 
+             OPx(mul, mullo) // should work correctly for all values
+ #if defined(USE_INCORRECT_UNSIGNED_COMPARE) && !defined(VC_IMPL_SSE4_1)

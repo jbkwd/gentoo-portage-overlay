@@ -1,0 +1,11 @@
+--- ./lib/Makefile.in	2010-03-28 10:11:38.000000000 +0200
++++ ./lib/Makefile.in	2012-06-14 18:40:24.000000000 +0200
+@@ -72,7 +72,7 @@
+   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
+ LTLIBRARIES = $(lib_LTLIBRARIES)
+-liblmmin_la_LIBADD =
++liblmmin_la_LIBADD = -lm
+ am_liblmmin_la_OBJECTS = lmmin.lo lmcurve.lo
+ liblmmin_la_OBJECTS = $(am_liblmmin_la_OBJECTS)
+ liblmmin_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \

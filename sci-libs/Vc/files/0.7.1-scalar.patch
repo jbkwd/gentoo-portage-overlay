@@ -1,0 +1,11 @@
+diff -urP /usr/include/Vc/scalar/vector.h /tmp/scalar/vector.h
+--- /usr/include/Vc/scalar/vector.h	2013-06-13 16:40:05.000000000 +0200
++++ /tmp/scalar/vector.h	2013-06-13 17:02:17.000000000 +0200
+@@ -47,6 +47,7 @@
+     friend class WriteMaskedVector<T>;
+     public:
+         typedef typename DetermineEntryType<T>::Type EntryType;
++	typedef EntryType VectorType;
+     protected:
+         EntryType m_data;
+     public:
