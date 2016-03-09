@@ -1,0 +1,127 @@
+--- sse/intrinsics.h	2013-03-26 10:45:14.000000000 +0100
++++ sse/intrinsics.h	2013-09-04 11:02:26.000000000 +0200
+@@ -27,12 +27,7 @@
+ // linkage must be the same, otherwise it won't compile. Such a case occurs on Windows, where the
+ // intrin.h header (included indirectly via unistd.h) declares many SSE intrinsics again.
+ extern "C" {
+-// MMX
+-#include <mmintrin.h>
+-// SSE
+-#include <xmmintrin.h>
+-// SSE2
+-#include <emmintrin.h>
++#include <immintrin.h>
+ }
+ 
+ #if defined(__GNUC__) && !defined(VC_IMPL_SSE2)
+--- sse/vectorhelper.h	2013-06-13 17:05:37.000000000 +0200
++++ sse/vectorhelper.h	2013-09-04 11:02:26.000000000 +0200
+@@ -181,10 +181,14 @@
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType zero() { return CAT(_mm_setzero_, SUFFIX)(); }
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType one()  { return CAT(_mm_setone_, SUFFIX)(); }// set(1.); }
+ 
+-#ifdef VC_IMPL_FMA4
++#if defined VC_IMPL_FMA4
+             static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
+                 v1 = _mm_macc_pd(v2, v3, v4);
+             }
++#elif defined VC_IMPL_FMA
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
++                v1 = _mm_fmadd_pd(v2, v3, v4);
++            }
+ #else
+             static inline void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
+                 VectorType h2 = _mm_and_pd(v2, _mm_load_pd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
+@@ -207,7 +211,7 @@
+             }
+ #endif
+ 
+-						static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
++	    static Vc_ALWAYS_INLINE void fma(VectorType &v1, VectorType v2, VectorType v3) {
+                 fma4(v1, v1, v2, v3);
+             }
+ 
+@@ -274,10 +278,14 @@
+             static Vc_ALWAYS_INLINE Vc_CONST VectorType one()  { return CAT(_mm_setone_, SUFFIX)(); }// set(1.f); }
+             static Vc_ALWAYS_INLINE Vc_CONST _M128 concat(_M128D a, _M128D b) { return _mm_movelh_ps(_mm_cvtpd_ps(a), _mm_cvtpd_ps(b)); }
+ 
+-#ifdef VC_IMPL_FMA4
++#if defined VC_IMPL_FMA4
+             static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
+                 v1 = _mm_macc_ps(v2, v3, v4);
+             }
++#elif defined VC_IMPL_FMA
++            static Vc_ALWAYS_INLINE void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
++                v1 = _mm_fmadd_ps(v2, v3, v4);
++            }
+ #else
+             static inline void fma4(VectorType &v1, VectorType v2, VectorType v3, VectorType v4) {
+                 __m128d v2_0 = _mm_cvtps_pd(v2);
+--- avx/vectorhelper.h	2013-06-13 17:05:37.000000000 +0200
++++ avx/vectorhelper.h	2013-09-04 11:16:27.000000000 +0200
+@@ -226,8 +226,10 @@
+             static Vc_ALWAYS_INLINE VectorType one()  { return CAT(_mm256_setone_, SUFFIX)(); }// set(1.); }
+ 
+             static inline void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) {
+-#ifdef VC_IMPL_FMA4
++#if defined VC_IMPL_FMA4
+                 v1 = _mm256_macc_pd(v2, v3, v4);
++#elif defined VC_IMPL_FMA
++		v1 = _mm256_fmadd_pd(v2, v3, v4);
+ #else
+                 VectorType h2 = _mm256_and_pd(v2, _mm256_broadcast_sd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
+                 VectorType h3 = _mm256_and_pd(v3, _mm256_broadcast_sd(reinterpret_cast<const double *>(&c_general::highMaskDouble)));
+@@ -323,8 +325,11 @@
+             static Vc_ALWAYS_INLINE Vc_CONST m256 concat(param256d a, param256d b) { return _mm256_insertf128_ps(avx_cast<m256>(_mm256_cvtpd_ps(a)), _mm256_cvtpd_ps(b), 1); }
+ 
+             static inline void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) {
+-#ifdef VC_IMPL_FMA4
+-                v1 = _mm256_macc_ps(v2, v3, v4);
++#if defined VC_IMPL_FMA4
++	      v1 = _mm256_macc_ps(v2, v3, v4);
++#elif defined VC_IMPL_FMA
++	      v1 = _mm256_fmadd_ps(v2, v3, v4);
++
+ #else
+                 m256d v2_0 = _mm256_cvtps_pd(lo128(v2));
+                 m256d v2_1 = _mm256_cvtps_pd(hi128(v2));
+@@ -419,7 +424,7 @@
+                 return CAT(_mm256_set_, SUFFIX)(a, b, c, d, e, f, g, h); }
+ 
+             static Vc_INTRINSIC void fma4(VectorType &v1, VTArg v2, VTArg v3, VTArg v4) { 
+-#ifdef VC_IMPL_FMA4
++#if defined VC_IMPL_FMA4
+ 							m128i lo = _mm_macc_epi32(lo128(v2),lo128(v3),lo128(v4));
+ 							m128i hi = _mm_macc_epi32(hi128(v2),hi128(v3),hi128(v4));
+               v1 = AVX::concat(lo,hi);
+--- CMakeLists.txt  2013-09-05 18:08:23.667624021 +0200
++++ CMakeLists.txt 2013-09-05 18:09:08.878621276 +0200
+@@ -16,6 +16,16 @@
+ include (AddTargetProperty)
+ include (OptimizeForArchitecture)
+ 
++#when one of the following is set, this will interfere with autodetection / VC_IMPL. Not complete!
++#intrinsics.h:124:2: error: #error "SSE3 was disabled but something includes <pmmintrin.h>. Please fix your code."
++SET(_REPLACE_PATTERNS "-march=[a-zA-Z0-9]* " "-msse " "-msse2 " "-msse3 " "-msse4 " "-msse4_1 " "-msse4_2 " "-avx " "-xop ")
++FOREACH(_PATTERN ${_REPLACE_PATTERNS})
++       MESSAGE("Removing ${_PATTERN} from provided C(XX)_FLAGS")
++       STRING(REGEX REPLACE ${_PATTERN} "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
++       STRING(REGEX REPLACE ${_PATTERN} "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
++ENDFOREACH(_PATTERN)
++
++
+ vc_determine_compiler()
+ 
+ if(ROOT_RELEASE)
+--- CMakeLists.txt	2013-09-05 18:14:15.822602641 +0200
++++ CMakeLists.txt	2013-09-05 18:19:40.483582930 +0200
+@@ -120,7 +120,7 @@
+    set(libvc_compile_flags "-DVC_COMPILE_LIB")
+    AddCompilerFlag("-fPIC" CXX_FLAGS libvc_compile_flags)
+    vc_compile_for_all_implementations(_objs src/trigonometric.cpp FLAGS ${libvc_compile_flags}
+-      ONLY SSE2 SSE3 SSSE3 SSE4_1 AVX SSE+XOP+FMA4 AVX+XOP+FMA4)
++      ONLY SSE2 SSE3 SSSE3 SSE4_1 AVX SSE+XOP+FMA4 AVX+XOP+FMA4 AVX+XOP+FMA AVX+FMA SSE+XOP+FMA SSE+FMA)
+    # add AVX+XOP+FMA AVX+FMA once there's a check in place whether the assembler can handle FMA instructions
+    set(_srcs src/const.cpp src/cpuid.cpp src/support.cpp ${_objs})
+    if(USE_AVX)
+

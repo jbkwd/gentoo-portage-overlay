@@ -1,0 +1,25 @@
+--- cmake/OptimizeForArchitecture.cmake	2013-03-26 10:45:14.000000000 +0100
++++ cmake/OptimizeForArchitecture.cmake	2013-09-02 15:44:13.784318565 +0200
+@@ -71,7 +71,9 @@
+    if(_vendor_id STREQUAL "GenuineIntel")
+       if(_cpu_family EQUAL 6)
+          # Any recent Intel CPU except NetBurst
+-         if(_cpu_model EQUAL 58)
++        if(_cpu_model EQUAL 60)
++            set(TARGET_ARCHITECTURE "haswell")
++         elseif(_cpu_model EQUAL 58)
+             set(TARGET_ARCHITECTURE "ivy-bridge")
+          elseif(_cpu_model EQUAL 46) # Xeon 7500 series
+             set(TARGET_ARCHITECTURE "westmere")
+@@ -182,6 +184,11 @@
+       list(APPEND _march_flag_list "corei7-avx")
+       list(APPEND _march_flag_list "core2")
+       list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4.1" "sse4.2" "avx" "rdrnd" "f16c")
++   elseif(TARGET_ARCHITECTURE STREQUAL "haswell")
++      list(APPEND _march_flag_list "core-avx2")
++      list(APPEND _march_flag_list "corei7-avx")
++      list(APPEND _march_flag_list "core2")
++      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4.1" "sse4.2" "avx" "rdrnd" "f16c" "avx2" "fma")   
+    elseif(TARGET_ARCHITECTURE STREQUAL "sandy-bridge")
+       list(APPEND _march_flag_list "sandybridge")
+       list(APPEND _march_flag_list "corei7-avx")

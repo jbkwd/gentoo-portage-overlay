@@ -1,0 +1,11 @@
+--- Vc-0.7.1/cmake/OptimizeForArchitecture.cmake.orig	2015-01-30 17:45:07.413417552 +0100
++++ Vc-0.7.1/cmake/OptimizeForArchitecture.cmake	2015-01-30 17:47:09.965669391 +0100
+@@ -226,7 +226,7 @@
+       list(APPEND _march_flag_list "bulldozer")
+       list(APPEND _march_flag_list "barcelona")
+       list(APPEND _march_flag_list "core2")
+-      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma" "fma4")
++      list(APPEND _available_vector_units_list "sse" "sse2" "sse3" "ssse3" "sse4a" "sse4.1" "sse4.2" "avx" "xop" "fma" "fma4" "popcnt")
+    elseif(TARGET_ARCHITECTURE STREQUAL "barcelona")
+       list(APPEND _march_flag_list "barcelona")
+       list(APPEND _march_flag_list "core2")

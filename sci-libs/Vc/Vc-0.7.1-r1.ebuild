@@ -26,6 +26,8 @@ src_prepare() {
 	epatch "${FILESDIR}/${PV}-fma.patch"
 	epatch "${FILESDIR}/${PV}-fma4.patch"
 	epatch "${FILESDIR}/${PV}-scalar.patch"
+	epatch "${FILESDIR}/${PV}-bulldozer.patch"
+	epatch "${FILESDIR}/${PV}-haswell.patch"
 }
 
 src_configure() {

@@ -27,6 +27,14 @@ src_prepare() {
 	epatch "${FILESDIR}/${PV}-fma4.patch"
 	epatch "${FILESDIR}/${PV}-examples3.patch"
 	epatch "${FILESDIR}/${PV}-scalar.patch"
+	epatch "${FILESDIR}/${PV}-bulldozer.patch"
+	epatch "${FILESDIR}/${PV}-haswell.patch"
+	epatch "${FILESDIR}/${PV}-fma-opt.patch"
+	epatch "${FILESDIR}/${PV}-mask.patch"
+	epatch "${FILESDIR}/${PV}-fma-fix.patch"
+	epatch "${FILESDIR}/${PV}-disable_vector_units.patch"
+	epatch "${FILESDIR}/${PV}-popcnt.patch"
+        epatch "${FILESDIR}/${PV}-piledriver_popcnt.patch"
 }
 
 src_configure() {
@@ -35,4 +43,3 @@ src_configure() {
 	)
         cmake-utils_src_configure
 }
-
