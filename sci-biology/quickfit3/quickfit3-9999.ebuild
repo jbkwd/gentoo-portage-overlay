@@ -57,8 +57,10 @@ src_install() {
 	dodir /usr/bin/
 	cat <<-EOF >"${ED}"usr/bin/${PN}
 	#!/bin/sh
+	unset LD_PRELOAD
+	export LD_LIBRARY_PATH="/opt/QuickFit3/"
 	cd /opt/QuickFit3/
-	exec ./quickfit3 "$@"
+	exec ./quickfit3 "\$@"
 	EOF
 	fperms 0755 /usr/bin/${PN}
 }
