@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-inherit linux-mod
-
 EAPI='2'
+
+inherit linux-mod
 
 DESCRIPTION="SDK library for scientific digital CCD, ICCD, EMCCD and sCMOS cameras"
 HOMEPAGE="http://www.andor.com/software/sdk/"
