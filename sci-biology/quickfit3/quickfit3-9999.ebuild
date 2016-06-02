@@ -35,6 +35,7 @@ sci-libs/lapack-reference
 >=sci-libs/nlopt-2.4.2"
 
 RDEPEND="${DEPEND}"
+IUSE="opengl"
 
 src_prepare() {
 #	cd "${WORKDIR}/${PN}"
@@ -42,8 +43,10 @@ src_prepare() {
 }
 
 src_compile() {
+	local DEFS=""
+	use !opengl && { DEFS="${DEFS} DEFINES+=JKQTFASTPLOTTER_NOOPENGL"; }
 	cd "${WORKDIR}/${PN}"
-	eqmake5 quickfit3.pro || die "eqmake failed"
+	eqmake5 quickfit3.pro ${DEFS} || die "eqmake failed"
 	ewarn "Running make three times now for some issues. The first two are nonfatal."
 	nonfatal emake
 	nonfatal emake
