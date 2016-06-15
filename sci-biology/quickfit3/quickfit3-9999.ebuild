@@ -41,8 +41,8 @@ src_prepare() {
 	cd "${WORKDIR}/${PN}"
 	cp quickfit.inc.gentoo quickfit.inc
 	sed -i -e "s#^OUTPUTDIR_NAME = .*#OUTPUTDIR_NAME = ${D}/opt/QuickFit3#g" quickfit_config.pri || die "Failed to set OUTPUTDIR_NAME!"
-	use hardwaredrivers && { sed -i '/![^#]/ s/\(^.*nohardwaredrivers.*$\)/#\1/' quickfit.inc; }
-	use specialdrivers && { sed -i '/![^#]/ s/\(^.*nospecialdrivers.*$\)/#\1/' quickfit.inc; }
+	use hardwaredrivers && { sed -i '/^#/! s/\(^.*nohardwaredrivers.*$\)/#\1/' quickfit.inc; }
+	use specialdrivers && { sed -i '/^#/! s/\(^.*nospecialdrivers.*$\)/#\1/' quickfit.inc; }
 }
 
 src_compile() {
